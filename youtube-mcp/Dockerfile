@@ -27,11 +27,11 @@ RUN npm ci --only=production
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
 
-# Install express for SSE server
-RUN npm install express
-
 # Create .env file from environment
 RUN touch .env
+
+# Install supergateway globally
+RUN npm install -g supergateway
 
 EXPOSE 8080
 
@@ -39,5 +39,5 @@ EXPOSE 8080
 ENV NODE_ENV=production
 ENV YOUTUBE_API_KEY=${YOUTUBE_API_KEY}
 
-# Start the simple SSE server
-CMD ["node", "dist/sse-simple.js"]
+# Start with supergateway - same approach as web-scraper-mcp
+CMD ["sh", "-c", "supergateway --port ${PORT:-8080} --stdio 'node dist/index.js 2>&1'"]

@@ -68,16 +68,7 @@ setupResources(mcpServer);
 setupPrompts(mcpServer);
 
 // Get initial definitions
-(async () => {
-  try {
-    // Force load definitions
-    await mcpServer.setRequestHandler.call(mcpServer, 'tools/list', async () => ({ tools: toolDefinitions }));
-    await mcpServer.setRequestHandler.call(mcpServer, 'resources/list', async () => ({ resources: resourceDefinitions }));
-    await mcpServer.setRequestHandler.call(mcpServer, 'prompts/list', async () => ({ prompts: promptDefinitions }));
-  } catch (e) {
-    // Ignore
-  }
-})();
+// Note: These handlers are already set up by setupTools, setupResources, and setupPrompts
 
 // SSE endpoint
 app.get('/sse', (req, res) => {

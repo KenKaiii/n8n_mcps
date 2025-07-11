@@ -39,5 +39,5 @@ EXPOSE 8080
 ENV NODE_ENV=production
 ENV YOUTUBE_API_KEY=${YOUTUBE_API_KEY}
 
-# Start the SSE server
-CMD ["node", "dist/sse-server.js"]
+# Start the simple SSE server
+CMD ["node", "dist/sse-simple.js"]

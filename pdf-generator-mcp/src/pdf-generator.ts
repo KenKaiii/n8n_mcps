@@ -256,7 +256,7 @@ function getBaseCSS(theme: string = 'light', fontStyle: string = 'modern'): stri
 
       body {
         font-family: ${fonts.body};
-        line-height: 1.6;
+        line-height: 1.8;
         color: ${t.text};
         background: ${t.bg};
         padding: 40px;
@@ -269,9 +269,9 @@ function getBaseCSS(theme: string = 'light', fontStyle: string = 'modern'): stri
       h1, h2, h3, h4, h5, h6 {
         font-family: ${fonts.heading};
         color: ${t.heading};
-        margin: 1.5em 0 0.5em;
+        margin: 1.5em 0 0.75em;
         font-weight: 600;
-        line-height: 1.2;
+        line-height: 1.3;
         letter-spacing: -0.02em;
       }
 
@@ -283,7 +283,7 @@ function getBaseCSS(theme: string = 'light', fontStyle: string = 'modern'): stri
       h6 { font-size: 1em; }
 
       p {
-        margin: 1em 0;
+        margin: 1.25em 0;
       }
 
       /* Typography enhancements */
@@ -307,13 +307,14 @@ function getBaseCSS(theme: string = 'light', fontStyle: string = 'modern'): stri
 
       /* Lists styling */
       ul, ol {
-        margin: 1em 0;
+        margin: 1.25em 0;
         padding-left: 2em;
       }
 
       ul li {
         list-style-type: disc;
-        margin: 0.5em 0;
+        margin: 0.75em 0;
+        line-height: 1.8;
       }
 
       ul ul li {
@@ -326,16 +327,18 @@ function getBaseCSS(theme: string = 'light', fontStyle: string = 'modern'): stri
 
       ol li {
         list-style-type: decimal;
-        margin: 0.5em 0;
+        margin: 0.75em 0;
+        line-height: 1.8;
       }
 
       /* Blockquotes */
       blockquote {
-        margin: 1em 0;
-        padding: 1em 1.5em;
+        margin: 1.5em 0;
+        padding: 1.25em 1.5em;
         border-left: 4px solid ${t.accent};
         background: ${t.code};
         font-style: italic;
+        line-height: 1.8;
       }
 
       blockquote p:first-child {
@@ -547,7 +550,19 @@ function getBaseCSS(theme: string = 'light', fontStyle: string = 'modern'): stri
       }
 
       .prose li {
-        margin: 0.5em 0 !important;
+        margin: 0.75em 0 !important;
+        line-height: 1.8 !important;
+      }
+
+      /* Prose paragraph spacing */
+      .prose p {
+        margin: 1.25em 0 !important;
+        line-height: 1.8 !important;
+      }
+
+      .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+        margin-top: 1.5em !important;
+        margin-bottom: 0.75em !important;
       }
     </style>
   `;
@@ -906,7 +921,6 @@ export async function generateMarkdownPDF(
       ${options.customCSS ? `<style>${options.customCSS}</style>` : ''}
     </head>
     <body class="max-w-4xl mx-auto">
-      <h1 class="text-4xl font-bold mb-8">${options.title}</h1>
       <div class="prose max-w-none">
         ${htmlContent}
       </div>

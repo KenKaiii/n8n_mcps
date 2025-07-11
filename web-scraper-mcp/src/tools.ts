@@ -12,6 +12,7 @@ import * as cheerio from 'cheerio';
 import { publishToGithub } from './github.js';
 import puppeteer from 'puppeteer';
 import { GITHUB_CONFIG as CONFIG_GITHUB } from './config.js';
+import { Octokit } from '@octokit/rest';
 import {
   ListToolsRequestSchema,
   CallToolRequestSchema,
@@ -115,6 +116,48 @@ export function setupTools(server: Server) {
             required: ['url'],
           },
         },
+        {
+          name: 'github_editor',
+          description:
+            'Edit, create, move, or delete files in the GitHub repository. For bulk operations, use delete_batch action.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              action: {
+                type: 'string',
+                enum: ['create', 'update', 'delete', 'delete_batch', 'move', 'list'],
+                description:
+                  'The action to perform. Use delete_batch for deleting multiple files safely.',
+              },
+              path: {
+                type: 'string',
+                description: 'File path in the repository (for single file operations)',
+              },
+              paths: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Array of file paths (for delete_batch action)',
+              },
+              content: {
+                type: 'string',
+                description: 'File content (for create/update actions)',
+              },
+              newPath: {
+                type: 'string',
+                description: 'New file path (for move action)',
+              },
+              commitMessage: {
+                type: 'string',
+                description: 'Commit message for the change',
+              },
+              branch: {
+                type: 'string',
+                description: 'Branch to operate on (default: main)',
+              },
+            },
+            required: ['action'],
+          },
+        },
       ],
     };
   });
@@ -140,6 +183,18 @@ export function setupTools(server: Server) {
               url: string;
               config?: Partial<CrawlConfig>;
               basePathInRepo?: string;
+            }
+          );
+        case 'github_editor':
+          return await handleGithubEditor(
+            args as {
+              action: 'create' | 'update' | 'delete' | 'delete_batch' | 'move' | 'list';
+              path?: string;
+              paths?: string[];
+              content?: string;
+              newPath?: string;
+              commitMessage?: string;
+              branch?: string;
             }
           );
         default:
@@ -454,6 +509,326 @@ async function handleCrawlAndPublish(args: {
       },
     ],
   };
+}
+
+async function handleGithubEditor(args: {
+  action: 'create' | 'update' | 'delete' | 'delete_batch' | 'move' | 'list';
+  path?: string;
+  paths?: string[];
+  content?: string;
+  newPath?: string;
+  commitMessage?: string;
+  branch?: string;
+}): Promise<{ content: Array<{ type: string; text: string }> }> {
+  const branch = args.branch || GITHUB_CONFIG.branch;
+  const octokit = new Octokit({ auth: GITHUB_CONFIG.token });
+
+  try {
+    switch (args.action) {
+      case 'list': {
+        // List files in the repository
+        const targetPath = args.path || '';
+        const { data } = await octokit.repos.getContent({
+          owner: GITHUB_CONFIG.owner,
+          repo: GITHUB_CONFIG.repo,
+          path: targetPath,
+          ref: branch,
+        });
+
+        const files = Array.isArray(data) ? data : [data];
+        const fileList = files.map(file => ({
+          name: file.name,
+          path: file.path,
+          type: file.type,
+          size: file.size,
+        }));
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ success: true, files: fileList }, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'create': {
+        if (!args.path || !args.content) {
+          throw new Error('Path and content are required for create action');
+        }
+
+        const content = Buffer.from(args.content).toString('base64');
+        const { data } = await octokit.repos.createOrUpdateFileContents({
+          owner: GITHUB_CONFIG.owner,
+          repo: GITHUB_CONFIG.repo,
+          path: args.path,
+          message: args.commitMessage || `Create ${args.path}`,
+          content,
+          branch,
+        });
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  success: true,
+                  action: 'created',
+                  path: args.path,
+                  commit: data.commit.sha,
+                  url: data.content?.html_url,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case 'update': {
+        if (!args.path || !args.content) {
+          throw new Error('Path and content are required for update action');
+        }
+
+        // Get the current file to get its SHA
+        const { data: currentFile } = await octokit.repos.getContent({
+          owner: GITHUB_CONFIG.owner,
+          repo: GITHUB_CONFIG.repo,
+          path: args.path,
+          ref: branch,
+        });
+
+        if ('sha' in currentFile) {
+          const content = Buffer.from(args.content).toString('base64');
+          const { data } = await octokit.repos.createOrUpdateFileContents({
+            owner: GITHUB_CONFIG.owner,
+            repo: GITHUB_CONFIG.repo,
+            path: args.path,
+            message: args.commitMessage || `Update ${args.path}`,
+            content,
+            sha: currentFile.sha,
+            branch,
+          });
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(
+                  {
+                    success: true,
+                    action: 'updated',
+                    path: args.path,
+                    commit: data.commit.sha,
+                    url: data.content?.html_url,
+                  },
+                  null,
+                  2
+                ),
+              },
+            ],
+          };
+        } else {
+          throw new Error('Cannot update: file not found or is a directory');
+        }
+      }
+
+      case 'delete': {
+        if (!args.path) {
+          throw new Error('Path is required for delete action');
+        }
+
+        // Get the current file to get its SHA
+        const { data: currentFile } = await octokit.repos.getContent({
+          owner: GITHUB_CONFIG.owner,
+          repo: GITHUB_CONFIG.repo,
+          path: args.path,
+          ref: branch,
+        });
+
+        if ('sha' in currentFile) {
+          const { data } = await octokit.repos.deleteFile({
+            owner: GITHUB_CONFIG.owner,
+            repo: GITHUB_CONFIG.repo,
+            path: args.path,
+            message: args.commitMessage || `Delete ${args.path}`,
+            sha: currentFile.sha,
+            branch,
+          });
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(
+                  {
+                    success: true,
+                    action: 'deleted',
+                    path: args.path,
+                    commit: data.commit.sha,
+                  },
+                  null,
+                  2
+                ),
+              },
+            ],
+          };
+        } else {
+          throw new Error('Cannot delete: file not found or is a directory');
+        }
+      }
+
+      case 'delete_batch': {
+        if (!args.paths || args.paths.length === 0) {
+          throw new Error('Paths array is required for delete_batch action');
+        }
+
+        const results: Array<{ path: string; success: boolean; error?: string }> = [];
+
+        // Process deletions one by one to avoid SHA conflicts
+        for (const filePath of args.paths) {
+          try {
+            // Get the current file to get its SHA
+            const { data: currentFile } = await octokit.repos.getContent({
+              owner: GITHUB_CONFIG.owner,
+              repo: GITHUB_CONFIG.repo,
+              path: filePath,
+              ref: branch,
+            });
+
+            if ('sha' in currentFile) {
+              await octokit.repos.deleteFile({
+                owner: GITHUB_CONFIG.owner,
+                repo: GITHUB_CONFIG.repo,
+                path: filePath,
+                message: args.commitMessage || `Delete ${filePath}`,
+                sha: currentFile.sha,
+                branch,
+              });
+
+              results.push({ path: filePath, success: true });
+            } else {
+              results.push({
+                path: filePath,
+                success: false,
+                error: 'Not a file or not found',
+              });
+            }
+          } catch (error: any) {
+            results.push({
+              path: filePath,
+              success: false,
+              error: error.message || 'Unknown error',
+            });
+          }
+
+          // Small delay to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+
+        const successCount = results.filter(r => r.success).length;
+        const failureCount = results.filter(r => !r.success).length;
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  success: failureCount === 0,
+                  action: 'delete_batch',
+                  totalFiles: args.paths.length,
+                  successCount,
+                  failureCount,
+                  results,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case 'move': {
+        if (!args.path || !args.newPath) {
+          throw new Error('Both path and newPath are required for move action');
+        }
+
+        // Get the current file content
+        const { data: currentFile } = await octokit.repos.getContent({
+          owner: GITHUB_CONFIG.owner,
+          repo: GITHUB_CONFIG.repo,
+          path: args.path,
+          ref: branch,
+        });
+
+        if ('content' in currentFile && 'sha' in currentFile) {
+          // Create the new file
+          await octokit.repos.createOrUpdateFileContents({
+            owner: GITHUB_CONFIG.owner,
+            repo: GITHUB_CONFIG.repo,
+            path: args.newPath,
+            message: args.commitMessage || `Move ${args.path} to ${args.newPath}`,
+            content: currentFile.content,
+            branch,
+          });
+
+          // Delete the old file
+          await octokit.repos.deleteFile({
+            owner: GITHUB_CONFIG.owner,
+            repo: GITHUB_CONFIG.repo,
+            path: args.path,
+            message: `Delete ${args.path} (moved to ${args.newPath})`,
+            sha: currentFile.sha,
+            branch,
+          });
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(
+                  {
+                    success: true,
+                    action: 'moved',
+                    oldPath: args.path,
+                    newPath: args.newPath,
+                  },
+                  null,
+                  2
+                ),
+              },
+            ],
+          };
+        } else {
+          throw new Error('Cannot move: file not found or is a directory');
+        }
+      }
+
+      default:
+        throw new Error(`Unknown action: ${args.action}`);
+    }
+  } catch (error) {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(
+            {
+              success: false,
+              error: error instanceof Error ? error.message : 'Unknown error',
+            },
+            null,
+            2
+          ),
+        },
+      ],
+    };
+  }
 }
 
 function shouldCrawlUrl(url: string, startUrl: string, config: CrawlConfig): boolean {

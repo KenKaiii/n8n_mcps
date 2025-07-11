@@ -7,16 +7,26 @@ import { Readability } from '@mozilla/readability';
 import { JSDOM } from 'jsdom';
 import { ExtractedContent } from './types.js';
 import { extractWithTemplate, ExtractedData } from './templates/index.js';
+import { createExtractionContext } from './templates/extraction-context.js';
+import { cleanText } from './templates/validators.js';
 
 export function extractContent(html: string, url: string, templateName?: string): ExtractedContent {
-  const dom = new JSDOM(html, { url });
-  const doc = dom.window.document;
+  // Create extraction context once to avoid redundant DOM parsing
+  const ctx = createExtractionContext(html, url);
+  const { dom, doc } = ctx;
 
-  // First try template-based extraction
-  const templateData = extractWithTemplate(html, url, templateName);
+  // First try template-based extraction with the context
+  const templateData = extractWithTemplate(html, url, templateName, ctx);
 
   if (templateData._template && templateData._template !== 'generic') {
     console.log(`Using ${templateData._template} template extraction for ${url}`);
+
+    // Clean all extracted text fields
+    Object.keys(templateData).forEach(key => {
+      if (typeof templateData[key] === 'string') {
+        templateData[key] = cleanText(templateData[key] as string);
+      }
+    });
 
     // For article templates, also use Readability to get the full content
     if (templateData._template === 'article') {
@@ -36,8 +46,10 @@ export function extractContent(html: string, url: string, templateName?: string)
 
         return {
           url,
-          title: (templateData.title as string) || article.title || doc.title || 'Untitled',
-          content: article.textContent || '',
+          title: cleanText(
+            (templateData.title as string) || article.title || doc.title || 'Untitled'
+          ),
+          content: cleanText(article.textContent || ''),
           markdown,
           metadata: {
             template: templateData._template,
@@ -57,7 +69,7 @@ export function extractContent(html: string, url: string, templateName?: string)
 
     return {
       url,
-      title: (templateData.title as string) || doc.title || 'Untitled',
+      title: cleanText((templateData.title as string) || doc.title || 'Untitled'),
       content: JSON.stringify(templateData, null, 2),
       markdown,
       metadata: {
@@ -79,8 +91,8 @@ export function extractContent(html: string, url: string, templateName?: string)
 
     return {
       url,
-      title: article.title || doc.title || 'Untitled',
-      content: article.textContent || '',
+      title: cleanText(article.title || doc.title || 'Untitled'),
+      content: cleanText(article.textContent || ''),
       markdown: turndownService.turndown(article.content),
       metadata: {
         author: article.byline || undefined,

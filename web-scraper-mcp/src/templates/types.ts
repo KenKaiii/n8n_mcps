@@ -7,6 +7,8 @@ export interface ExtractorField {
   transform?: (value: string) => any;
   regex?: RegExp;
   contains?: string[];
+  required?: boolean;
+  fallback?: any;
 }
 
 export interface ExtractorSchema {

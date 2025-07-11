@@ -1,5 +1,6 @@
 import { Template, DetectionSignals } from './types.js';
 import { calculateMatchScore } from './utils.js';
+import { parsePrice, parseNumber } from './transforms.js';
 
 const signals: DetectionSignals = {
   urlPatterns: ['/product/', '/item/', '/p/', '/dp/', '/products/', '-pd', '/buy/'],
@@ -53,18 +54,12 @@ export const ecommerceProductTemplate: Template = {
         '.price-sales',
         '[data-price]',
       ],
-      transform: (text: string) => {
-        const cleanPrice = text.replace(/[^0-9.,]/g, '').replace(',', '');
-        return parseFloat(cleanPrice) || null;
-      },
+      transform: parsePrice,
     },
 
     originalPrice: {
       selectors: ['.price-was', '.price-original', 's.price', '.compare-at-price'],
-      transform: (text: string) => {
-        const cleanPrice = text.replace(/[^0-9.,]/g, '').replace(',', '');
-        return parseFloat(cleanPrice) || null;
-      },
+      transform: parsePrice,
     },
 
     currency: {
@@ -117,10 +112,7 @@ export const ecommerceProductTemplate: Template = {
 
     reviewCount: {
       selectors: ['.review-count', '[itemprop="reviewCount"]', '.reviews-count'],
-      transform: (text: string) => {
-        const count = parseInt(text.replace(/\D/g, ''));
-        return isNaN(count) ? null : count;
-      },
+      transform: parseNumber,
     },
 
     variants: {

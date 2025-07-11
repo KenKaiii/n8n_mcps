@@ -1,5 +1,6 @@
 import { Template, DetectionSignals } from './types.js';
 import { calculateMatchScore } from './utils.js';
+import { parseNumber } from './transforms.js';
 
 const signals: DetectionSignals = {
   urlPatterns: ['/article/', '/blog/', '/post/', '/news/', '/story/', '/entry/'],
@@ -120,10 +121,7 @@ export const articleTemplate: Template = {
 
     commentCount: {
       selectors: ['.comment-count', '.comments-count', '.discussion-count'],
-      transform: (text: string) => {
-        const count = parseInt(text.replace(/\D/g, ''));
-        return isNaN(count) ? null : count;
-      },
+      transform: parseNumber,
     },
   },
 };

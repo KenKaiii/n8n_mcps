@@ -1,6 +1,7 @@
 import { JSDOM } from 'jsdom';
 import { Template, ExtractedData } from './types.js';
 import { extractWithSchema } from './utils.js';
+import { ExtractionContext } from './extraction-context.js';
 
 // Import individual templates
 import { ecommerceProductTemplate } from './ecommerce-product.js';
@@ -28,14 +29,26 @@ export const templates: Template[] = [
   documentationTemplate,
 ];
 
-export function detectBestTemplate(url: string, html: string): Template | null {
-  const dom = new JSDOM(html, { url });
+export function detectBestTemplate(
+  url: string,
+  html: string,
+  ctx?: ExtractionContext
+): Template | null {
+  const dom = ctx?.dom || new JSDOM(html, { url });
   const scores: Map<Template, number> = new Map();
 
   // Run all template detections
   for (const template of templates) {
     const score = template.detect(url, dom);
     scores.set(template, score);
+
+    // Early exit if high confidence
+    if (score > 0.85) {
+      console.log(
+        `Auto-detected template: ${template.name} (confidence: ${score.toFixed(2)}) - early exit`
+      );
+      return template;
+    }
   }
 
   // Get highest scoring template
@@ -57,9 +70,10 @@ export function detectBestTemplate(url: string, html: string): Template | null {
 export function extractWithTemplate(
   html: string,
   url: string,
-  templateName?: string
+  templateName?: string,
+  ctx?: ExtractionContext
 ): ExtractedData {
-  const dom = new JSDOM(html, { url });
+  const dom = ctx?.dom || new JSDOM(html, { url });
 
   let template: Template | null = null;
 
@@ -73,11 +87,11 @@ export function extractWithTemplate(
 
   if (!template) {
     // Auto-detect template
-    template = detectBestTemplate(url, html);
+    template = detectBestTemplate(url, html, ctx);
   }
 
   if (template) {
-    const data = extractWithSchema(dom, template.extract);
+    const data = extractWithSchema(dom, template.extract, ctx);
     data._template = template.name;
     data._confidence = template.detect(url, dom);
     return data;

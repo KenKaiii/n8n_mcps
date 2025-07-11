@@ -1,10 +1,15 @@
 import { JSDOM } from 'jsdom';
 import { DetectionSignals, ExtractorField, ExtractorSchema, ExtractedData } from './types.js';
+import { ExtractionContext, querySelector, querySelectorAll } from './extraction-context.js';
 
-export function calculateMatchScore(dom: JSDOM, signals: DetectionSignals): number {
+export function calculateMatchScore(
+  dom: JSDOM,
+  signals: DetectionSignals,
+  ctx?: ExtractionContext
+): number {
   let score = 0;
   let maxScore = 0;
-  const doc = dom.window.document;
+  const doc = ctx?.doc || dom.window.document;
   const bodyText = doc.body?.textContent?.toLowerCase() || '';
 
   // URL pattern matching (20% weight)
@@ -52,13 +57,17 @@ export function calculateMatchScore(dom: JSDOM, signals: DetectionSignals): numb
   return score / maxScore;
 }
 
-export function extractField(dom: JSDOM, field: string[] | ExtractorField): any {
-  const doc = dom.window.document;
+export function extractField(
+  dom: JSDOM,
+  field: string[] | ExtractorField,
+  ctx?: ExtractionContext
+): any {
+  const doc = ctx?.doc || dom.window.document;
 
   // Handle simple selector array
   if (Array.isArray(field)) {
     for (const selector of field) {
-      const element = doc.querySelector(selector);
+      const element = ctx ? querySelector(ctx, selector) : doc.querySelector(selector);
       if (element) {
         return element.textContent?.trim() || '';
       }
@@ -72,10 +81,10 @@ export function extractField(dom: JSDOM, field: string[] | ExtractorField): any 
   for (const selector of selectors) {
     try {
       if (multiple) {
-        const elements = doc.querySelectorAll(selector);
+        const elements = ctx ? querySelectorAll(ctx, selector) : doc.querySelectorAll(selector);
         if (elements.length > 0) {
           const values = Array.from(elements)
-            .map(el => {
+            .map((el: any) => {
               const value = attribute ? el.getAttribute(attribute) : el.textContent;
               return value?.trim() || '';
             })
@@ -84,7 +93,7 @@ export function extractField(dom: JSDOM, field: string[] | ExtractorField): any 
           return transform ? values.map(transform) : values;
         }
       } else {
-        const element = doc.querySelector(selector);
+        const element = ctx ? querySelector(ctx, selector) : doc.querySelector(selector);
         if (element) {
           let value = attribute ? element.getAttribute(attribute) : element.textContent;
           value = value?.trim() || '';
@@ -111,11 +120,15 @@ export function extractField(dom: JSDOM, field: string[] | ExtractorField): any 
   return multiple ? [] : null;
 }
 
-export function extractWithSchema(dom: JSDOM, schema: ExtractorSchema): ExtractedData {
+export function extractWithSchema(
+  dom: JSDOM,
+  schema: ExtractorSchema,
+  ctx?: ExtractionContext
+): ExtractedData {
   const result: ExtractedData = {};
 
   for (const [fieldName, fieldConfig] of Object.entries(schema)) {
-    const value = extractField(dom, fieldConfig);
+    const value = extractField(dom, fieldConfig, ctx);
     if (value !== null && value !== undefined && (!Array.isArray(value) || value.length > 0)) {
       result[fieldName] = value;
     }

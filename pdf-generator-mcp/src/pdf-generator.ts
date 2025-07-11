@@ -911,6 +911,26 @@ function getBaseCSS(theme: string = 'light', fontStyle: string = 'modern'): stri
         margin-top: 1.5em !important;
         margin-bottom: 0.75em !important;
       }
+
+      /* Ensure Tailwind text size classes work */
+      .text-5xl { font-size: 3rem !important; line-height: 1 !important; }
+      .text-4xl { font-size: 2.25rem !important; line-height: 2.5rem !important; }
+      .text-3xl { font-size: 1.875rem !important; line-height: 2.25rem !important; }
+      .text-2xl { font-size: 1.5rem !important; line-height: 2rem !important; }
+      .text-xl { font-size: 1.25rem !important; line-height: 1.75rem !important; }
+      .text-lg { font-size: 1.125rem !important; line-height: 1.75rem !important; }
+
+      /* Ensure Tailwind font weight classes work */
+      .font-bold { font-weight: 700 !important; }
+      .font-semibold { font-weight: 600 !important; }
+      .font-medium { font-weight: 500 !important; }
+
+      /* Ensure headings in sections are styled properly */
+      h1, h2, h3, h4, h5, h6 {
+        font-family: ${fonts.heading} !important;
+        color: ${t.heading} !important;
+        font-weight: 600 !important;
+      }
     </style>
   `;
 }

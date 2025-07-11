@@ -9,3 +9,7 @@ coverage/
 *.swo
 .idea/
 .vscode/
+sse-server.log
+memories.json
+test-*.js
+test-*.ts

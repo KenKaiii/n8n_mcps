@@ -162,7 +162,7 @@ async function markdownToHtml(markdown: string, options?: { highlight?: boolean 
   }
 
   // Process markdown with enhanced formatting
-  let html = marked(markdown, { renderer });
+  let html = await marked(markdown, { renderer });
 
   // Post-process for additional formatting
   // Add support for text alignment (e.g., ->centered text<-)

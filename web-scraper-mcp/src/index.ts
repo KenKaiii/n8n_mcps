@@ -32,12 +32,22 @@ setupTools(server);
 
 // Start the server
 async function main() {
+  console.error('Starting MCP server...');
+
+  // Ensure stdout is unbuffered for SSE
+  if (process.stdout.isTTY === false) {
+    process.stdout.setDefaultEncoding('utf-8');
+  }
+
   const transport = new StdioServerTransport();
+
+  console.error('Connecting transport...');
   await server.connect(transport);
-  console.error('MCP server started');
+  console.error('MCP server started and ready');
 }
 
 main().catch(error => {
   console.error('Server error:', error);
+  console.error('Stack trace:', error.stack);
   process.exit(1);
 });

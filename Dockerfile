@@ -44,4 +44,6 @@ EXPOSE 8081
 ENV GITHUB_TOKEN=${GITHUB_TOKEN}
 
 # Start with supergateway - Railway provides PORT env var
+# Use NODE_NO_WARNINGS to reduce stderr noise and ensure clean stdio
+ENV NODE_NO_WARNINGS=1
 CMD ["sh", "-c", "supergateway --port ${PORT:-8081} --stdio node dist/index.js"]

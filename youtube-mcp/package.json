@@ -5,10 +5,8 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "bin": {
-    "youtube-analyzer-mcp": "./bin/run.js"
-  },
   "scripts": {
+    "start": "node dist/index.js",
     "build": "tsc",
     "dev": "tsx src/index.ts",
     "dev:sse": "tsx src/sse-server.ts",
@@ -29,6 +27,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.15.0",
     "compromise": "latest",
+    "dotenv": "^17.2.0",
     "express": "^5.1.0",
     "natural": "latest"
   },

@@ -8,6 +8,7 @@ import { marked } from 'marked';
 import Prism from 'prismjs';
 import QRCode from 'qrcode';
 import { ChartConfiguration } from 'chart.js';
+import katex from 'katex';
 import fs from 'fs/promises';
 import path from 'path';
 import {
@@ -107,6 +108,65 @@ function highlightCode(code: string, language: string): string {
 }
 
 /**
+ * Generate table of contents from HTML
+ */
+function generateTableOfContents(html: string): string {
+  const headings: Array<{ level: number; text: string; id: string }> = [];
+  const headingRegex = /<h([1-6])(?:\s+id="([^"]*)")?[^>]*>(.+?)<\/h\1>/gi;
+
+  let match;
+  let headingCounter = 0;
+  while ((match = headingRegex.exec(html)) !== null) {
+    const level = parseInt(match[1]);
+    const id = match[2] || `heading-${++headingCounter}`;
+    const text = match[3].replace(/<[^>]*>/g, ''); // Strip HTML tags
+    headings.push({ level, text, id });
+  }
+
+  if (headings.length === 0) return '';
+
+  let toc = '<nav class="table-of-contents"><h2>Table of Contents</h2><ul>';
+  let currentLevel = 0;
+
+  for (const heading of headings) {
+    while (currentLevel < heading.level) {
+      toc += '<ul>';
+      currentLevel++;
+    }
+    while (currentLevel > heading.level) {
+      toc += '</ul>';
+      currentLevel--;
+    }
+    toc += `<li><a href="#${heading.id}">${heading.text}</a></li>`;
+  }
+
+  while (currentLevel > 0) {
+    toc += '</ul>';
+    currentLevel--;
+  }
+
+  toc += '</ul></nav>';
+  return toc;
+}
+
+/**
+ * Render Mermaid diagram
+ */
+async function renderMermaidDiagram(code: string): Promise<string> {
+  // For now, we'll return a placeholder with the code
+  // In production, you'd use mermaid.render() with puppeteer
+  return `
+    <div class="mermaid-diagram">
+      <div class="mermaid-placeholder">
+        <p><strong>Mermaid Diagram</strong></p>
+        <pre><code>${code}</code></pre>
+        <p><em>Note: Mermaid rendering requires additional setup</em></p>
+      </div>
+    </div>
+  `;
+}
+
+/**
  * Convert markdown to HTML
  */
 async function markdownToHtml(markdown: string, options?: { highlight?: boolean }): Promise<string> {
@@ -146,20 +206,42 @@ async function markdownToHtml(markdown: string, options?: { highlight?: boolean 
     return '<hr class="divider" />';
   };
 
-  if (options?.highlight) {
-    const markedOptions: any = {
-      highlight: (code: string, lang: string) => {
-        if (lang && Prism.languages[lang]) {
-          return highlightCode(code, lang);
-        }
-        return code;
-      },
-      breaks: true, // Enable line breaks
-      gfm: true, // GitHub Flavored Markdown
-      tables: true // Enable tables
-    };
-    marked.setOptions(markedOptions);
-  }
+  // Store mermaid diagrams for post-processing
+  const mermaidDiagrams: Array<{ placeholder: string; code: string }> = [];
+  let mermaidCounter = 0;
+
+  // Custom renderer for code blocks to handle mermaid diagrams
+  renderer.code = (code: string, language: string | undefined) => {
+    if (language === 'mermaid') {
+      const placeholder = `<!--MERMAID_PLACEHOLDER_${++mermaidCounter}-->`;
+      mermaidDiagrams.push({ placeholder, code });
+      return placeholder;
+    }
+
+    // Regular code highlighting
+    if (language && options?.highlight && Prism.languages[language]) {
+      const highlighted = highlightCode(code, language);
+      return `<pre><code class="language-${language}">${highlighted}</code></pre>`;
+    }
+
+    return `<pre><code>${code}</code></pre>`;
+  };
+
+  // Configure marked options
+  const markedOptions: any = {
+    highlight: options?.highlight ? (code: string, lang: string) => {
+      if (lang && Prism.languages[lang]) {
+        return highlightCode(code, lang);
+      }
+      return code;
+    } : undefined,
+    breaks: true, // Enable line breaks
+    gfm: true, // GitHub Flavored Markdown
+    tables: true, // Enable tables
+    headerIds: true, // Add IDs to headers
+    mangle: false // Don't mangle email addresses
+  };
+  marked.setOptions(markedOptions);
 
   // Process markdown with enhanced formatting
   let html = await marked(markdown, { renderer });
@@ -169,6 +251,103 @@ async function markdownToHtml(markdown: string, options?: { highlight?: boolean 
   html = html.replace(/->\s*(.+?)\s*<-/g, '<div class="text-center">$1</div>');
   // Add support for right alignment (e.g., >>right aligned text)
   html = html.replace(/^>>\s*(.+?)$/gm, '<div class="text-right">$1</div>');
+
+  // Add support for task lists (GitHub style)
+  html = html.replace(/<li>\[\s\]\s/g, '<li class="task-list-item"><input type="checkbox" disabled> ');
+  html = html.replace(/<li>\[x\]\s/gi, '<li class="task-list-item"><input type="checkbox" checked disabled> ');
+
+  // Add support for highlighting
+  html = html.replace(/==(.*?)==/g, '<mark>$1</mark>');
+
+  // Add support for footnotes
+  const footnotes: { [key: string]: string } = {};
+  let footnoteCounter = 0;
+
+  // Collect footnote definitions
+  html = html.replace(/^\[\^([^\]]+)\]:\s*(.+)$/gm, (_match, id, text) => {
+    footnotes[id] = text;
+    return ''; // Remove from main content
+  });
+
+  // Replace footnote references
+  html = html.replace(/\[\^([^\]]+)\]/g, (match, id) => {
+    if (footnotes[id]) {
+      footnoteCounter++;
+      return `<sup><a href="#fn${footnoteCounter}" id="fnref${footnoteCounter}">${footnoteCounter}</a></sup>`;
+    }
+    return match;
+  });
+
+  // Add footnotes section if any exist
+  if (Object.keys(footnotes).length > 0) {
+    html += '<hr class="footnotes-sep"><section class="footnotes"><ol>';
+    let counter = 0;
+    for (const [, text] of Object.entries(footnotes)) {
+      counter++;
+      html += `<li id="fn${counter}"><p>${text} <a href="#fnref${counter}" class="footnote-backref">↩</a></p></li>`;
+    }
+    html += '</ol></section>';
+  }
+
+  // Add support for math equations (block and inline)
+  // Block math: $$...$$
+  html = html.replace(/\$\$([^$]+)\$\$/g, (match, math) => {
+    try {
+      return `<div class="math-block">${katex.renderToString(math.trim(), {
+        displayMode: true,
+        throwOnError: false
+      })}</div>`;
+    } catch (e) {
+      return `<div class="math-error">Math error: ${match}</div>`;
+    }
+  });
+
+  // Inline math: $...$
+  html = html.replace(/\$([^$\n]+)\$/g, (match, math) => {
+    try {
+      return `<span class="math-inline">${katex.renderToString(math.trim(), {
+        displayMode: false,
+        throwOnError: false
+      })}</span>`;
+    } catch (e) {
+      return `<span class="math-error">Math error: ${match}</span>`;
+    }
+  });
+
+  // Add support for subscript and superscript
+  html = html.replace(/~([^~]+)~/g, '<sub>$1</sub>'); // ~text~ for subscript
+  html = html.replace(/\^([^^]+)\^/g, '<sup>$1</sup>'); // ^text^ for superscript
+
+  // Add support for definition lists
+  html = html.replace(/^([^\n]+)\n:\s+(.+)$/gm, '<dl><dt>$1</dt><dd>$2</dd></dl>');
+
+  // Clean up consecutive definition lists
+  html = html.replace(/<\/dl>\s*<dl>/g, '');
+
+  // Add support for abbreviations
+  const abbreviations: { [key: string]: string } = {};
+  html = html.replace(/\*\[([^\]]+)\]:\s*(.+)/g, (_match, abbr, definition) => {
+    abbreviations[abbr] = definition;
+    return ''; // Remove from content
+  });
+
+  // Apply abbreviations
+  for (const [abbr, definition] of Object.entries(abbreviations)) {
+    const regex = new RegExp(`\\b${abbr}\\b`, 'g');
+    html = html.replace(regex, `<abbr title="${definition}">${abbr}</abbr>`);
+  }
+
+  // Add support for table of contents marker
+  if (html.includes('[[TOC]]') || html.includes('[TOC]')) {
+    const toc = generateTableOfContents(html);
+    html = html.replace(/\[\[?TOC\]\]?/g, toc);
+  }
+
+  // Replace mermaid placeholders with rendered diagrams
+  for (const { placeholder, code } of mermaidDiagrams) {
+    const rendered = await renderMermaidDiagram(code);
+    html = html.replace(placeholder, rendered);
+  }
 
   return html;
 }
@@ -506,12 +685,180 @@ function getBaseCSS(theme: string = 'light', fontStyle: string = 'modern'): stri
         letter-spacing: 1em;
       }
 
+      /* Task list styling */
+      .task-list-item {
+        list-style: none;
+        margin-left: -1.5em;
+      }
+
+      .task-list-item input[type="checkbox"] {
+        margin-right: 0.5em;
+        vertical-align: middle;
+      }
+
+      /* Highlighting */
+      mark {
+        background-color: #ffeb3b;
+        color: #000;
+        padding: 0.1em 0.2em;
+        border-radius: 2px;
+      }
+
+      ${theme === 'dark' ? `
+      mark {
+        background-color: #ffc107;
+        color: #000;
+      }
+      ` : ''}
+
+      /* Footnotes */
+      .footnotes-sep {
+        margin: 3em 0 1em;
+        border: none;
+        border-top: 1px solid ${t.codeBorder};
+      }
+
+      .footnotes {
+        font-size: 0.9em;
+        color: ${t.text};
+      }
+
+      .footnotes ol {
+        padding-left: 1.5em;
+      }
+
+      .footnotes li {
+        margin: 0.5em 0;
+      }
+
+      .footnote-backref {
+        text-decoration: none;
+        margin-left: 0.25em;
+      }
+
+      /* Math equations */
+      .math-block {
+        margin: 1.5em 0;
+        text-align: center;
+        overflow-x: auto;
+      }
+
+      .math-inline {
+        vertical-align: middle;
+      }
+
+      .math-error {
+        color: #dc3545;
+        background: #fee;
+        padding: 0.25em 0.5em;
+        border-radius: 3px;
+        font-family: ${fonts.code};
+        font-size: 0.9em;
+      }
+
+      /* Definition lists */
+      dl {
+        margin: 1.25em 0;
+      }
+
+      dt {
+        font-weight: 600;
+        color: ${t.heading};
+        margin-top: 1em;
+      }
+
+      dd {
+        margin-left: 2em;
+        margin-bottom: 0.5em;
+      }
+
+      /* Abbreviations */
+      abbr {
+        text-decoration: none;
+        border-bottom: 1px dotted ${t.text};
+        cursor: help;
+      }
+
+      /* Subscript and Superscript */
+      sub, sup {
+        font-size: 0.75em;
+        line-height: 0;
+        position: relative;
+        vertical-align: baseline;
+      }
+
+      sup {
+        top: -0.5em;
+      }
+
+      sub {
+        bottom: -0.25em;
+      }
+
+      /* Table of Contents */
+      .table-of-contents {
+        background: ${t.code};
+        border: 1px solid ${t.codeBorder};
+        border-radius: 6px;
+        padding: 1.5em;
+        margin: 2em 0;
+      }
+
+      .table-of-contents h2 {
+        margin-top: 0;
+        margin-bottom: 1em;
+        font-size: 1.25em;
+      }
+
+      .table-of-contents ul {
+        list-style: none;
+        padding-left: 0;
+      }
+
+      .table-of-contents ul ul {
+        padding-left: 1.5em;
+      }
+
+      .table-of-contents li {
+        margin: 0.5em 0;
+      }
+
+      .table-of-contents a {
+        text-decoration: none;
+        color: ${t.text};
+      }
+
+      .table-of-contents a:hover {
+        color: ${t.accent};
+        text-decoration: underline;
+      }
+
+      /* Mermaid diagrams */
+      .mermaid-diagram {
+        margin: 1.5em 0;
+        text-align: center;
+      }
+
+      .mermaid-placeholder {
+        background: ${t.code};
+        border: 1px solid ${t.codeBorder};
+        border-radius: 6px;
+        padding: 1.5em;
+      }
+
+      .mermaid-placeholder pre {
+        background: transparent;
+        border: none;
+        margin: 1em 0;
+      }
+
       @media print {
         body {
           padding: 0;
         }
       }
     </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
       /* Override Tailwind's CSS reset for lists */

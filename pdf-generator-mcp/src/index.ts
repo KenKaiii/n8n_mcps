@@ -30,6 +30,26 @@ const server = new Server(
 // Override protocol version handling to accept any version (for n8n compatibility)
 (server as any).protocolVersion = '2025-03-26';
 
+// Add debug logging for incoming messages
+const originalConnect = server.connect.bind(server);
+server.connect = async function(transport: any) {
+  console.error('Setting up transport with debug logging...');
+
+  // Intercept incoming messages
+  const originalRead = transport.read?.bind(transport) || transport.readable?.getReader?.().read?.bind(transport.readable.getReader());
+  if (transport.read) {
+    transport.read = async function() {
+      const result = await originalRead();
+      if (result) {
+        console.error('Incoming message:', JSON.stringify(result, null, 2));
+      }
+      return result;
+    };
+  }
+
+  return originalConnect(transport);
+};
+
 // Set up tools
 setupTools(server);
 

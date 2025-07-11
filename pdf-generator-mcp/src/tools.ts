@@ -64,6 +64,7 @@ MARKDOWN FORMATTING SUPPORTED:
                     level: { type: 'number', description: 'Heading level (1-6)' },
                   },
                   required: ['title', 'content'],
+                  additionalProperties: false,
                 },
               },
               codeExamples: {
@@ -78,12 +79,13 @@ MARKDOWN FORMATTING SUPPORTED:
                     description: { type: 'string' },
                   },
                   required: ['language', 'code'],
+                  additionalProperties: false,
                 },
               },
               theme: {
                 type: 'string',
                 enum: ['light', 'dark', 'sepia'],
-                description: 'Color theme',
+                description: 'Color theme (default: light)',
               },
               fontStyle: {
                 type: 'string',
@@ -96,8 +98,7 @@ MARKDOWN FORMATTING SUPPORTED:
               },
               publishToGithub: {
                 type: 'boolean',
-                description: 'Publish to GitHub repository',
-                default: true,
+                description: 'Publish to GitHub repository (default: true)',
               },
               githubPath: {
                 type: 'string',
@@ -105,6 +106,7 @@ MARKDOWN FORMATTING SUPPORTED:
               },
             },
             required: ['title', 'sections'],
+            additionalProperties: false,
           },
         },
         {
@@ -144,6 +146,7 @@ MARKDOWN FORMATTING SUPPORTED:
                     email: { type: 'string' },
                   },
                   required: ['name'],
+                  additionalProperties: false,
                 },
               },
               sections: {
@@ -163,10 +166,12 @@ MARKDOWN FORMATTING SUPPORTED:
                           content: { type: 'string' },
                         },
                         required: ['title', 'content'],
+                        additionalProperties: false,
                       },
                     },
                   },
                   required: ['title', 'content'],
+                  additionalProperties: false,
                 },
               },
               citations: {
@@ -183,6 +188,7 @@ MARKDOWN FORMATTING SUPPORTED:
                     url: { type: 'string' },
                   },
                   required: ['id', 'authors', 'title', 'year'],
+                  additionalProperties: false,
                 },
               },
               charts: {
@@ -200,6 +206,7 @@ MARKDOWN FORMATTING SUPPORTED:
                     description: { type: 'string' },
                   },
                   required: ['type', 'data'],
+                  additionalProperties: false,
                 },
               },
               theme: {
@@ -213,8 +220,7 @@ MARKDOWN FORMATTING SUPPORTED:
               },
               publishToGithub: {
                 type: 'boolean',
-                description: 'Publish to GitHub repository',
-                default: true,
+                description: 'Publish to GitHub repository (default: true)',
               },
               githubPath: {
                 type: 'string',
@@ -222,6 +228,7 @@ MARKDOWN FORMATTING SUPPORTED:
               },
             },
             required: ['title', 'abstract', 'sections'],
+            additionalProperties: false,
           },
         },
         {
@@ -259,6 +266,7 @@ MARKDOWN FORMATTING SUPPORTED IN TEXT FIELDS:
                   width: { type: 'number' },
                   height: { type: 'number' },
                 },
+                additionalProperties: false,
               },
               signature: {
                 type: 'object',
@@ -270,6 +278,7 @@ MARKDOWN FORMATTING SUPPORTED IN TEXT FIELDS:
                     enum: ['left', 'center', 'right'],
                   },
                 },
+                additionalProperties: false,
               },
               qrCode: {
                 type: 'object',
@@ -281,6 +290,7 @@ MARKDOWN FORMATTING SUPPORTED IN TEXT FIELDS:
                     enum: ['top-right', 'bottom-right', 'bottom-left'],
                   },
                 },
+                additionalProperties: false,
               },
               theme: {
                 type: 'string',
@@ -293,8 +303,7 @@ MARKDOWN FORMATTING SUPPORTED IN TEXT FIELDS:
               },
               publishToGithub: {
                 type: 'boolean',
-                description: 'Publish to GitHub repository',
-                default: true,
+                description: 'Publish to GitHub repository (default: true)',
               },
               githubPath: {
                 type: 'string',
@@ -302,6 +311,7 @@ MARKDOWN FORMATTING SUPPORTED IN TEXT FIELDS:
               },
             },
             required: ['title', 'documentType', 'data'],
+            additionalProperties: false,
           },
         },
         {
@@ -335,8 +345,7 @@ FULL MARKDOWN FORMATTING SUPPORT:
               },
               includeHighlighting: {
                 type: 'boolean',
-                description: 'Enable syntax highlighting for code blocks',
-                default: true,
+                description: 'Enable syntax highlighting for code blocks (default: true)',
               },
               customCSS: {
                 type: 'string',
@@ -357,8 +366,7 @@ FULL MARKDOWN FORMATTING SUPPORT:
               },
               publishToGithub: {
                 type: 'boolean',
-                description: 'Publish to GitHub repository',
-                default: true,
+                description: 'Publish to GitHub repository (default: true)',
               },
               githubPath: {
                 type: 'string',
@@ -366,6 +374,7 @@ FULL MARKDOWN FORMATTING SUPPORT:
               },
             },
             required: ['title', 'markdown'],
+            additionalProperties: false,
           },
         },
         {
@@ -385,6 +394,7 @@ FULL MARKDOWN FORMATTING SUPPORT:
               },
             },
             required: ['pdfType', 'options'],
+            additionalProperties: false,
           },
         },
       ],
@@ -392,7 +402,28 @@ FULL MARKDOWN FORMATTING SUPPORT:
   });
 
   server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
-    const { name, arguments: args } = request.params;
+    console.error('Received tool call request:', JSON.stringify(request, null, 2));
+
+    // Handle different parameter structures from n8n
+    let name: string;
+    let args: any;
+
+    if (request.params) {
+      name = request.params.name;
+      args = request.params.arguments || {};
+    } else if (request.name && request.arguments) {
+      // Direct structure from n8n
+      name = request.name;
+      args = request.arguments || {};
+    } else {
+      throw new McpError(
+        ErrorCode.InvalidRequest,
+        'Invalid request structure: missing name or arguments'
+      );
+    }
+
+    console.error(`Processing tool: ${name}`);
+    console.error('Arguments:', JSON.stringify(args, null, 2));
 
     try {
       switch (name) {

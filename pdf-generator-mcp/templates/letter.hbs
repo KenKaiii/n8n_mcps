@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2.5cm;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .letterhead {
+            margin-bottom: 40px;
+            {{#if logo}}
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e5e7eb;
+            {{/if}}
+        }
+        
+        {{#if logo}}
+        .logo {
+            margin-bottom: 20px;
+        }
+        
+        .logo img {
+            max-width: {{#if logo.width}}{{logo.width}}px{{else}}200px{{/if}};
+            max-height: {{#if logo.height}}{{logo.height}}px{{else}}80px{{/if}};
+        }
+        {{/if}}
+        
+        .sender-info {
+            {{#if logo}}
+            text-align: center;
+            {{else}}
+            text-align: right;
+            {{/if}}
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .date {
+            margin: 40px 0 30px 0;
+            text-align: right;
+            color: #666;
+        }
+        
+        .recipient {
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .salutation {
+            margin-bottom: 20px;
+        }
+        
+        .content {
+            text-align: justify;
+            margin-bottom: 30px;
+        }
+        
+        .content p {
+            margin: 15px 0;
+            text-indent: 2em;
+        }
+        
+        .content p:first-child {
+            text-indent: 0;
+        }
+        
+        .closing {
+            margin-top: 40px;
+        }
+        
+        .closing-text {
+            margin-bottom: 60px;
+        }
+        
+        {{#if signature}}
+        .signature-section {
+            margin-bottom: 10px;
+            {{#if (eq signature.position 'center')}}
+            text-align: center;
+            {{else if (eq signature.position 'right')}}
+            text-align: right;
+            {{else}}
+            text-align: left;
+            {{/if}}
+        }
+        
+        .signature-image {
+            max-width: 200px;
+            max-height: 80px;
+            margin-bottom: 10px;
+        }
+        {{/if}}
+        
+        .sender-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .sender-title {
+            color: #666;
+            font-style: italic;
+        }
+        
+        .enclosures {
+            margin-top: 40px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .cc {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        {{#if qrCode}}
+        .qr-code {
+            position: absolute;
+            {{#if (eq qrCode.position 'top-right')}}
+            top: 20px;
+            right: 20px;
+            {{else if (eq qrCode.position 'bottom-right')}}
+            bottom: 20px;
+            right: 20px;
+            {{else if (eq qrCode.position 'bottom-left')}}
+            bottom: 20px;
+            left: 20px;
+            {{/if}}
+        }
+        {{/if}}
+        
+        /* Formal letter style */
+        .formal {
+            font-family: 'Times New Roman', Times, serif;
+        }
+        
+        .formal .content {
+            text-indent: 0;
+        }
+        
+        /* Dark theme */
+        {{#if (eq theme 'dark')}}
+        body {
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+        
+        .letterhead {
+            border-bottom-color: #444;
+        }
+        
+        .sender-info, .date, .sender-title, .enclosures, .cc {
+            color: #999;
+        }
+        {{/if}}
+        
+        /* Sepia theme */
+        {{#if (eq theme 'sepia')}}
+        body {
+            background: #f4f1ea;
+            color: #5c4b3a;
+        }
+        
+        .letterhead {
+            border-bottom-color: #d4c4a8;
+        }
+        
+        .sender-info, .date, .sender-title, .enclosures, .cc {
+            color: #8b7355;
+        }
+        {{/if}}
+    </style>
+</head>
+<body class="{{#if data.style}}{{data.style}}{{/if}}">
+    {{#if logo}}
+    <div class="letterhead">
+        <div class="logo">
+            <img src="{{logo.url}}" alt="Logo">
+        </div>
+        <div class="sender-info">
+            {{#if data.from.name}}{{data.from.name}}<br>{{/if}}
+            {{#if data.from.address}}{{data.from.address}}<br>{{/if}}
+            {{#if data.from.city}}{{data.from.city}}{{#if data.from.state}}, {{data.from.state}}{{/if}} {{data.from.zip}}<br>{{/if}}
+            {{#if data.from.phone}}Phone: {{data.from.phone}}<br>{{/if}}
+            {{#if data.from.email}}Email: {{data.from.email}}{{/if}}
+        </div>
+    </div>
+    {{else}}
+    <div class="letterhead">
+        <div class="sender-info">
+            {{#if data.from.name}}{{data.from.name}}<br>{{/if}}
+            {{#if data.from.address}}{{data.from.address}}<br>{{/if}}
+            {{#if data.from.city}}{{data.from.city}}{{#if data.from.state}}, {{data.from.state}}{{/if}} {{data.from.zip}}<br>{{/if}}
+            {{#if data.from.phone}}Phone: {{data.from.phone}}<br>{{/if}}
+            {{#if data.from.email}}Email: {{data.from.email}}{{/if}}
+        </div>
+    </div>
+    {{/if}}
+    
+    <div class="date">
+        {{data.date}}
+    </div>
+    
+    <div class="recipient">
+        {{#if data.to.name}}{{data.to.name}}<br>{{/if}}
+        {{#if data.to.title}}{{data.to.title}}<br>{{/if}}
+        {{#if data.to.company}}{{data.to.company}}<br>{{/if}}
+        {{#if data.to.address}}{{data.to.address}}<br>{{/if}}
+        {{#if data.to.city}}{{data.to.city}}{{#if data.to.state}}, {{data.to.state}}{{/if}} {{data.to.zip}}{{/if}}
+    </div>
+    
+    {{#if data.reference}}
+    <div style="margin: 20px 0;">
+        <strong>Re: {{data.reference}}</strong>
+    </div>
+    {{/if}}
+    
+    <div class="salutation">
+        {{#if data.salutation}}
+        {{data.salutation}}
+        {{else}}
+        Dear {{#if data.to.name}}{{data.to.name}}{{else}}Sir/Madam{{/if}},
+        {{/if}}
+    </div>
+    
+    <div class="content">
+        {{{data.body}}}
+    </div>
+    
+    <div class="closing">
+        <div class="closing-text">
+            {{#if data.closing}}
+            {{data.closing}}
+            {{else}}
+            Sincerely,
+            {{/if}}
+        </div>
+        
+        {{#if signature}}
+        <div class="signature-section">
+            {{#if signature.image}}
+            <img src="{{signature.image}}" alt="Signature" class="signature-image">
+            {{/if}}
+        </div>
+        {{/if}}
+        
+        <div class="sender-name">
+            {{data.from.name}}
+        </div>
+        {{#if data.from.title}}
+        <div class="sender-title">
+            {{data.from.title}}
+        </div>
+        {{/if}}
+    </div>
+    
+    {{#if data.enclosures}}
+    <div class="enclosures">
+        <strong>Enclosures:</strong>
+        {{#if (isArray data.enclosures)}}
+        <ul style="margin: 5px 0; padding-left: 20px;">
+            {{#each data.enclosures}}
+            <li>{{this}}</li>
+            {{/each}}
+        </ul>
+        {{else}}
+        {{data.enclosures}}
+        {{/if}}
+    </div>
+    {{/if}}
+    
+    {{#if data.cc}}
+    <div class="cc">
+        <strong>CC:</strong>
+        {{#if (isArray data.cc)}}
+        {{#each data.cc}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+        {{else}}
+        {{data.cc}}
+        {{/if}}
+    </div>
+    {{/if}}
+    
+    {{#if qrCode}}
+    <div class="qr-code">
+        <img src="{{qrCodeDataUrl}}" width="{{#if qrCode.size}}{{qrCode.size}}{{else}}100{{/if}}" height="{{#if qrCode.size}}{{qrCode.size}}{{else}}100{{/if}}">
+    </div>
+    {{/if}}
+</body>
+</html>

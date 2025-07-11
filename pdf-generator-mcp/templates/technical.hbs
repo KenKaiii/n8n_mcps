@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+            @bottom-right {
+                content: counter(page);
+                font-size: 10pt;
+                color: #666;
+            }
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .header {
+            border-bottom: 3px solid #2563eb;
+            padding-bottom: 20px;
+            margin-bottom: 40px;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            margin: 0 0 10px 0;
+            color: #1e40af;
+        }
+        
+        .metadata {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .toc {
+            background: #f3f4f6;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 40px;
+        }
+        
+        .toc h2 {
+            margin-top: 0;
+            color: #1e40af;
+        }
+        
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .toc li {
+            margin: 8px 0;
+        }
+        
+        .toc a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+        
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+            page-break-inside: avoid;
+        }
+        
+        h2 {
+            color: #1e40af;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 10px;
+            margin-top: 40px;
+        }
+        
+        h3 {
+            color: #2563eb;
+            margin-top: 30px;
+        }
+        
+        .code-example {
+            margin: 20px 0;
+            background: #1e293b;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .code-header {
+            background: #334155;
+            padding: 10px 20px;
+            color: #e2e8f0;
+            font-size: 0.9em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .code-language {
+            font-weight: 600;
+            color: #60a5fa;
+        }
+        
+        pre {
+            margin: 0;
+            padding: 20px;
+            overflow-x: auto;
+            color: #e2e8f0;
+        }
+        
+        code {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9em;
+        }
+        
+        .inline-code {
+            background: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #e11d48;
+            font-size: 0.9em;
+        }
+        
+        blockquote {
+            border-left: 4px solid #3b82f6;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #4b5563;
+            font-style: italic;
+        }
+        
+        .note {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .warning {
+            background: #fee2e2;
+            border-left: 4px solid #ef4444;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .success {
+            background: #d1fae5;
+            border-left: 4px solid #10b981;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        th, td {
+            border: 1px solid #e5e7eb;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        th {
+            background: #f3f4f6;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9fafb;
+        }
+        
+        .diagram {
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .diagram img {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        /* Dark theme overrides */
+        {{#if (eq theme 'dark')}}
+        body {
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+        
+        h1, h2, h3 {
+            color: #60a5fa;
+        }
+        
+        .header {
+            border-bottom-color: #3b82f6;
+        }
+        
+        .toc {
+            background: #1e293b;
+        }
+        
+        .inline-code {
+            background: #334155;
+            color: #f472b6;
+        }
+        
+        blockquote {
+            color: #94a3b8;
+            border-left-color: #60a5fa;
+        }
+        
+        table {
+            border-color: #334155;
+        }
+        
+        th {
+            background: #1e293b;
+            color: #f1f5f9;
+            border-color: #334155;
+        }
+        
+        td {
+            border-color: #334155;
+        }
+        
+        tr:nth-child(even) {
+            background: #1e293b;
+        }
+        {{/if}}
+        
+        /* Sepia theme overrides */
+        {{#if (eq theme 'sepia')}}
+        body {
+            background: #f4f1ea;
+            color: #5c4b3a;
+        }
+        
+        h1, h2, h3 {
+            color: #8b6914;
+        }
+        
+        .header {
+            border-bottom-color: #8b6914;
+        }
+        
+        .toc {
+            background: #ebe5d6;
+        }
+        
+        .inline-code {
+            background: #e8dcc6;
+            color: #8b4513;
+        }
+        {{/if}}
+    </style>
+    {{#if customCSS}}
+    <style>
+        {{{customCSS}}}
+    </style>
+    {{/if}}
+</head>
+<body>
+    <div class="header">
+        <h1>{{title}}</h1>
+        <div class="metadata">
+            {{#if metadata.author}}<div>Author: {{metadata.author}}</div>{{/if}}
+            {{#if metadata.version}}<div>Version: {{metadata.version}}</div>{{/if}}
+            <div>Generated: {{currentDate}}</div>
+        </div>
+    </div>
+    
+    {{#if includeTableOfContents}}
+    <div class="toc">
+        <h2>Table of Contents</h2>
+        <ul>
+            {{#each sections}}
+            <li style="margin-left: {{multiply (subtract level 1) 20}}px">
+                <a href="#section-{{@index}}">{{title}}</a>
+            </li>
+            {{/each}}
+        </ul>
+    </div>
+    {{/if}}
+    
+    {{#each sections}}
+    <div class="section" id="section-{{@index}}">
+        {{#if (eq level 1)}}<h1>{{title}}</h1>{{/if}}
+        {{#if (eq level 2)}}<h2>{{title}}</h2>{{/if}}
+        {{#if (eq level 3)}}<h3>{{title}}</h3>{{/if}}
+        {{#if (eq level 4)}}<h4>{{title}}</h4>{{/if}}
+        {{#if (eq level 5)}}<h5>{{title}}</h5>{{/if}}
+        {{#if (eq level 6)}}<h6>{{title}}</h6>{{/if}}
+        
+        {{{content}}}
+    </div>
+    {{/each}}
+    
+    {{#if codeExamples}}
+    <div class="section">
+        <h2>Code Examples</h2>
+        {{#each codeExamples}}
+        <div class="code-example">
+            <div class="code-header">
+                <span class="code-language">{{language}}</span>
+                {{#if filename}}<span class="filename">{{filename}}</span>{{/if}}
+            </div>
+            <pre><code class="language-{{language}}">{{{highlightedCode}}}</code></pre>
+            {{#if description}}
+            <div style="padding: 15px 20px; background: #1e293b; border-top: 1px solid #334155; color: #94a3b8; font-size: 0.9em;">
+                {{description}}
+            </div>
+            {{/if}}
+        </div>
+        {{/each}}
+    </div>
+    {{/if}}
+</body>
+</html>

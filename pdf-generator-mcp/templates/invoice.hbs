@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        .company-info {
+            flex: 1;
+        }
+        
+        .invoice-details {
+            text-align: right;
+        }
+        
+        .invoice-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2563eb;
+            margin-bottom: 10px;
+        }
+        
+        .invoice-date {
+            color: #666;
+        }
+        
+        {{#if logo}}
+        .logo {
+            margin-bottom: 20px;
+        }
+        
+        .logo img {
+            max-width: {{#if logo.width}}{{logo.width}}px{{else}}200px{{/if}};
+            max-height: {{#if logo.height}}{{logo.height}}px{{else}}80px{{/if}};
+        }
+        {{/if}}
+        
+        .company-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .addresses {
+            display: flex;
+            gap: 60px;
+            margin-bottom: 40px;
+        }
+        
+        .address-block {
+            flex: 1;
+        }
+        
+        .address-label {
+            font-weight: bold;
+            color: #666;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+        
+        .address-content {
+            line-height: 1.8;
+        }
+        
+        .items-table {
+            width: 100%;
+            margin-bottom: 40px;
+            border-collapse: collapse;
+        }
+        
+        .items-table th {
+            background: #f3f4f6;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        .items-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .totals {
+            margin-left: auto;
+            width: 300px;
+            margin-bottom: 40px;
+        }
+        
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+        }
+        
+        .total-row.subtotal {
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .total-row.final {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2563eb;
+            border-top: 2px solid #2563eb;
+            margin-top: 10px;
+            padding-top: 10px;
+        }
+        
+        .payment-info {
+            background: #f3f4f6;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 40px;
+        }
+        
+        .payment-info h3 {
+            margin-top: 0;
+            color: #1f2937;
+        }
+        
+        .notes {
+            margin-top: 40px;
+            padding: 20px;
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            border-radius: 4px;
+        }
+        
+        .notes h3 {
+            margin-top: 0;
+            color: #92400e;
+        }
+        
+        .footer {
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+        }
+        
+        {{#if qrCode}}
+        .qr-code {
+            position: absolute;
+            {{#if (eq qrCode.position 'top-right')}}
+            top: 20px;
+            right: 20px;
+            {{else if (eq qrCode.position 'bottom-right')}}
+            bottom: 20px;
+            right: 20px;
+            {{else if (eq qrCode.position 'bottom-left')}}
+            bottom: 20px;
+            left: 20px;
+            {{/if}}
+        }
+        {{/if}}
+        
+        /* Dark theme */
+        {{#if (eq theme 'dark')}}
+        body {
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+        
+        .invoice-header {
+            border-bottom-color: #444;
+        }
+        
+        .items-table th {
+            background: #2a2a2a;
+            border-bottom-color: #444;
+        }
+        
+        .items-table td {
+            border-bottom-color: #444;
+        }
+        
+        .payment-info {
+            background: #2a2a2a;
+        }
+        
+        .notes {
+            background: #332200;
+            border-left-color: #f59e0b;
+        }
+        {{/if}}
+        
+        /* Sepia theme */
+        {{#if (eq theme 'sepia')}}
+        body {
+            background: #f4f1ea;
+            color: #5c4b3a;
+        }
+        
+        .items-table th {
+            background: #ebe5d6;
+        }
+        
+        .payment-info {
+            background: #ebe5d6;
+        }
+        {{/if}}
+    </style>
+</head>
+<body>
+    <div class="invoice-header">
+        <div class="company-info">
+            {{#if logo}}
+            <div class="logo">
+                <img src="{{logo.url}}" alt="Company Logo">
+            </div>
+            {{/if}}
+            {{#if data.from.company}}
+            <div class="company-name">{{data.from.company}}</div>
+            {{/if}}
+            {{#if data.from.address}}
+            <div>{{data.from.address}}</div>
+            {{/if}}
+            {{#if data.from.city}}
+            <div>{{data.from.city}}{{#if data.from.state}}, {{data.from.state}}{{/if}} {{data.from.zip}}</div>
+            {{/if}}
+            {{#if data.from.phone}}
+            <div>Phone: {{data.from.phone}}</div>
+            {{/if}}
+            {{#if data.from.email}}
+            <div>Email: {{data.from.email}}</div>
+            {{/if}}
+        </div>
+        
+        <div class="invoice-details">
+            <div class="invoice-number">INVOICE #{{data.invoiceNumber}}</div>
+            <div class="invoice-date">Date: {{data.date}}</div>
+            {{#if data.dueDate}}
+            <div class="invoice-date">Due Date: {{data.dueDate}}</div>
+            {{/if}}
+        </div>
+    </div>
+    
+    <div class="addresses">
+        <div class="address-block">
+            <div class="address-label">Bill To</div>
+            <div class="address-content">
+                {{#if data.to.company}}<strong>{{data.to.company}}</strong><br>{{/if}}
+                {{#if data.to.name}}{{data.to.name}}<br>{{/if}}
+                {{#if data.to.address}}{{data.to.address}}<br>{{/if}}
+                {{#if data.to.city}}{{data.to.city}}{{#if data.to.state}}, {{data.to.state}}{{/if}} {{data.to.zip}}<br>{{/if}}
+                {{#if data.to.phone}}Phone: {{data.to.phone}}<br>{{/if}}
+                {{#if data.to.email}}Email: {{data.to.email}}{{/if}}
+            </div>
+        </div>
+        
+        {{#if data.shipTo}}
+        <div class="address-block">
+            <div class="address-label">Ship To</div>
+            <div class="address-content">
+                {{#if data.shipTo.company}}<strong>{{data.shipTo.company}}</strong><br>{{/if}}
+                {{#if data.shipTo.name}}{{data.shipTo.name}}<br>{{/if}}
+                {{#if data.shipTo.address}}{{data.shipTo.address}}<br>{{/if}}
+                {{#if data.shipTo.city}}{{data.shipTo.city}}{{#if data.shipTo.state}}, {{data.shipTo.state}}{{/if}} {{data.shipTo.zip}}{{/if}}
+            </div>
+        </div>
+        {{/if}}
+    </div>
+    
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th class="text-center">Quantity</th>
+                <th class="text-right">Unit Price</th>
+                <th class="text-right">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each data.items}}
+            <tr>
+                <td>
+                    <strong>{{description}}</strong>
+                    {{#if details}}<br><small>{{details}}</small>{{/if}}
+                </td>
+                <td class="text-center">{{quantity}}</td>
+                <td class="text-right">{{currency}}{{unitPrice}}</td>
+                <td class="text-right">{{currency}}{{amount}}</td>
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+    
+    <div class="totals">
+        <div class="total-row subtotal">
+            <span>Subtotal</span>
+            <span>{{data.currency}}{{data.subtotal}}</span>
+        </div>
+        {{#if data.tax}}
+        <div class="total-row">
+            <span>Tax ({{data.taxRate}}%)</span>
+            <span>{{data.currency}}{{data.tax}}</span>
+        </div>
+        {{/if}}
+        {{#if data.discount}}
+        <div class="total-row">
+            <span>Discount</span>
+            <span>-{{data.currency}}{{data.discount}}</span>
+        </div>
+        {{/if}}
+        {{#if data.shipping}}
+        <div class="total-row">
+            <span>Shipping</span>
+            <span>{{data.currency}}{{data.shipping}}</span>
+        </div>
+        {{/if}}
+        <div class="total-row final">
+            <span>Total</span>
+            <span>{{data.currency}}{{data.total}}</span>
+        </div>
+    </div>
+    
+    {{#if data.paymentInfo}}
+    <div class="payment-info">
+        <h3>Payment Information</h3>
+        {{{data.paymentInfo}}}
+    </div>
+    {{/if}}
+    
+    {{#if data.notes}}
+    <div class="notes">
+        <h3>Notes</h3>
+        {{{data.notes}}}
+    </div>
+    {{/if}}
+    
+    {{#if data.terms}}
+    <div class="footer">
+        {{{data.terms}}}
+    </div>
+    {{/if}}
+    
+    {{#if qrCode}}
+    <div class="qr-code">
+        <img src="{{qrCodeDataUrl}}" width="{{#if qrCode.size}}{{qrCode.size}}{{else}}150{{/if}}" height="{{#if qrCode.size}}{{qrCode.size}}{{else}}150{{/if}}">
+    </div>
+    {{/if}}
+</body>
+</html>

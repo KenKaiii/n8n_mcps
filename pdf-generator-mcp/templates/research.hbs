@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2.5cm;
+            @bottom-center {
+                content: counter(page);
+                font-size: 10pt;
+                color: #666;
+            }
+        }
+        
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12pt;
+            line-height: 1.8;
+            color: #000;
+            text-align: justify;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .paper-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        h1 {
+            font-size: 24pt;
+            margin: 0 0 20px 0;
+            font-weight: bold;
+        }
+        
+        .authors {
+            margin: 20px 0;
+            font-size: 14pt;
+        }
+        
+        .author {
+            margin: 10px 0;
+        }
+        
+        .author-name {
+            font-weight: bold;
+        }
+        
+        .author-affiliation {
+            font-style: italic;
+            font-size: 12pt;
+        }
+        
+        .author-email {
+            font-size: 10pt;
+            color: #0066cc;
+        }
+        
+        .abstract {
+            margin: 40px 60px;
+            padding: 20px;
+            background: #f8f8f8;
+            border-left: 3px solid #333;
+        }
+        
+        .abstract h2 {
+            font-size: 14pt;
+            margin: 0 0 10px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .abstract-content {
+            font-size: 11pt;
+            line-height: 1.6;
+        }
+        
+        .keywords {
+            margin: 20px 60px;
+            font-size: 11pt;
+        }
+        
+        .keywords strong {
+            font-weight: bold;
+        }
+        
+        section {
+            margin: 30px 0;
+            page-break-inside: avoid;
+        }
+        
+        h2 {
+            font-size: 16pt;
+            margin: 30px 0 15px 0;
+            font-weight: bold;
+            page-break-after: avoid;
+        }
+        
+        h3 {
+            font-size: 14pt;
+            margin: 20px 0 10px 0;
+            font-weight: bold;
+            page-break-after: avoid;
+        }
+        
+        h4 {
+            font-size: 12pt;
+            margin: 15px 0 10px 0;
+            font-weight: bold;
+            font-style: italic;
+        }
+        
+        p {
+            margin: 12px 0;
+            text-indent: 1.5em;
+        }
+        
+        .no-indent {
+            text-indent: 0;
+        }
+        
+        figure {
+            margin: 30px 0;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+        
+        figure img {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        figcaption {
+            margin-top: 10px;
+            font-size: 10pt;
+            font-style: italic;
+        }
+        
+        table {
+            width: 100%;
+            margin: 30px 0;
+            border-collapse: collapse;
+            font-size: 11pt;
+            page-break-inside: avoid;
+        }
+        
+        table caption {
+            margin-bottom: 10px;
+            font-size: 10pt;
+            font-style: italic;
+            text-align: left;
+        }
+        
+        th, td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        th {
+            background: #f0f0f0;
+            font-weight: bold;
+        }
+        
+        .equation {
+            margin: 20px 40px;
+            text-align: center;
+            font-style: italic;
+        }
+        
+        .citation {
+            color: #0066cc;
+            cursor: pointer;
+        }
+        
+        .references {
+            margin-top: 50px;
+        }
+        
+        .references h2 {
+            font-size: 16pt;
+            margin-bottom: 20px;
+        }
+        
+        .reference {
+            margin: 10px 0;
+            padding-left: 30px;
+            text-indent: -30px;
+            font-size: 11pt;
+        }
+        
+        .reference-id {
+            font-weight: bold;
+        }
+        
+        blockquote {
+            margin: 20px 40px;
+            padding-left: 20px;
+            border-left: 3px solid #666;
+            font-style: italic;
+        }
+        
+        .chart-container {
+            margin: 30px 0;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+        
+        .chart-title {
+            font-size: 11pt;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .chart-description {
+            font-size: 10pt;
+            font-style: italic;
+            margin-top: 10px;
+        }
+        
+        /* Dark theme */
+        {{#if (eq theme 'dark')}}
+        body {
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+        
+        .abstract {
+            background: #2a2a2a;
+            border-left-color: #666;
+        }
+        
+        th {
+            background: #333;
+            color: #e0e0e0;
+        }
+        
+        th, td {
+            border-color: #666;
+        }
+        
+        .citation {
+            color: #6db3f2;
+        }
+        {{/if}}
+        
+        /* Sepia theme */
+        {{#if (eq theme 'sepia')}}
+        body {
+            background: #f4f1ea;
+            color: #5c4b3a;
+        }
+        
+        .abstract {
+            background: #ebe5d6;
+            border-left-color: #8b6914;
+        }
+        
+        th {
+            background: #e8dcc6;
+        }
+        
+        .citation {
+            color: #8b6914;
+        }
+        {{/if}}
+    </style>
+    {{#if customCSS}}
+    <style>
+        {{{customCSS}}}
+    </style>
+    {{/if}}
+</head>
+<body>
+    <div class="paper-header">
+        <h1>{{title}}</h1>
+        
+        {{#if authors}}
+        <div class="authors">
+            {{#each authors}}
+            <div class="author">
+                <div class="author-name">{{name}}</div>
+                {{#if affiliation}}<div class="author-affiliation">{{affiliation}}</div>{{/if}}
+                {{#if email}}<div class="author-email">{{email}}</div>{{/if}}
+            </div>
+            {{/each}}
+        </div>
+        {{/if}}
+    </div>
+    
+    {{#if abstract}}
+    <div class="abstract">
+        <h2>Abstract</h2>
+        <div class="abstract-content">
+            {{abstract}}
+        </div>
+    </div>
+    {{/if}}
+    
+    {{#if keywords}}
+    <div class="keywords">
+        <strong>Keywords:</strong> {{#each keywords}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+    </div>
+    {{/if}}
+    
+    {{#each sections}}
+    <section>
+        <h2>{{title}}</h2>
+        {{{content}}}
+        
+        {{#if subsections}}
+        {{#each subsections}}
+        <div class="subsection">
+            <h3>{{title}}</h3>
+            {{{content}}}
+        </div>
+        {{/each}}
+        {{/if}}
+    </section>
+    {{/each}}
+    
+    {{#if charts}}
+    <section>
+        <h2>Figures and Charts</h2>
+        {{#each charts}}
+        <div class="chart-container">
+            {{#if title}}<div class="chart-title">Figure {{add @index 1}}: {{title}}</div>{{/if}}
+            <div class="chart" style="height: 400px;">
+                <!-- Chart will be rendered here -->
+                <canvas id="chart-{{@index}}"></canvas>
+            </div>
+            {{#if description}}<div class="chart-description">{{description}}</div>{{/if}}
+        </div>
+        {{/each}}
+    </section>
+    {{/if}}
+    
+    {{#if citations}}
+    <div class="references">
+        <h2>References</h2>
+        {{#each citations}}
+        <div class="reference">
+            <span class="reference-id">[{{id}}]</span>
+            {{authors}} ({{year}}). {{title}}.
+            {{#if journal}}<em>{{journal}}</em>.{{/if}}
+            {{#if volume}}{{volume}}{{#if issue}}({{issue}}){{/if}}.{{/if}}
+            {{#if pages}}pp. {{pages}}.{{/if}}
+            {{#if doi}}DOI: {{doi}}.{{/if}}
+            {{#if url}}<a href="{{url}}">{{url}}</a>{{/if}}
+        </div>
+        {{/each}}
+    </div>
+    {{/if}}
+    
+    <script>
+    // Render charts if any
+    {{#if charts}}
+    {{#each charts}}
+    (function() {
+        const ctx = document.getElementById('chart-{{@index}}').getContext('2d');
+        const chartData = {{{json data}}};
+        // Chart rendering will be handled by the PDF generator
+    })();
+    {{/each}}
+    {{/if}}
+    </script>
+</body>
+</html>

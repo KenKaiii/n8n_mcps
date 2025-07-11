@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            width: 297mm;
+            height: 210mm;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .certificate {
+            width: 90%;
+            height: 90%;
+            border: 20px solid #2563eb;
+            border-radius: 20px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px;
+            box-sizing: border-box;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        }
+        
+        .certificate::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            border: 2px solid #3b82f6;
+            border-radius: 10px;
+            pointer-events: none;
+        }
+        
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 200px;
+            color: rgba(59, 130, 246, 0.05);
+            font-weight: bold;
+            z-index: 0;
+            user-select: none;
+        }
+        
+        .content {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 800px;
+        }
+        
+        {{#if logo}}
+        .logo {
+            margin-bottom: 30px;
+        }
+        
+        .logo img {
+            max-width: {{#if logo.width}}{{logo.width}}px{{else}}150px{{/if}};
+            max-height: {{#if logo.height}}{{logo.height}}px{{else}}100px{{/if}};
+        }
+        {{/if}}
+        
+        .certificate-type {
+            font-size: 18px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .certificate-title {
+            font-size: 48px;
+            font-weight: bold;
+            color: #1e40af;
+            margin: 20px 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .presented-to {
+            font-size: 16px;
+            color: #666;
+            margin: 30px 0 10px 0;
+            font-style: italic;
+        }
+        
+        .recipient-name {
+            font-size: 36px;
+            font-weight: bold;
+            color: #1f2937;
+            margin: 10px 0 30px 0;
+            border-bottom: 3px solid #2563eb;
+            display: inline-block;
+            padding-bottom: 10px;
+        }
+        
+        .achievement {
+            font-size: 20px;
+            line-height: 1.8;
+            color: #4b5563;
+            margin: 20px 0 40px 0;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .date-section {
+            font-size: 16px;
+            color: #666;
+            margin: 20px 0;
+        }
+        
+        .signatures {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-top: 60px;
+            max-width: 600px;
+        }
+        
+        .signature-block {
+            text-align: center;
+            min-width: 200px;
+        }
+        
+        .signature-line {
+            border-bottom: 2px solid #333;
+            margin-bottom: 10px;
+            height: 60px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+        }
+        
+        .signature-image {
+            max-width: 150px;
+            max-height: 50px;
+            margin-bottom: 5px;
+        }
+        
+        .signature-name {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+        
+        .signature-title {
+            font-size: 14px;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .certificate-id {
+            position: absolute;
+            bottom: 20px;
+            right: 30px;
+            font-size: 12px;
+            color: #999;
+        }
+        
+        {{#if qrCode}}
+        .qr-code {
+            position: absolute;
+            {{#if (eq qrCode.position 'top-right')}}
+            top: 30px;
+            right: 30px;
+            {{else if (eq qrCode.position 'bottom-right')}}
+            bottom: 30px;
+            right: 30px;
+            {{else if (eq qrCode.position 'bottom-left')}}
+            bottom: 30px;
+            left: 30px;
+            {{/if}}
+        }
+        {{/if}}
+        
+        /* Gold theme */
+        .gold {
+            border-color: #ca8a04;
+        }
+        
+        .gold::before {
+            border-color: #eab308;
+        }
+        
+        .gold .certificate-title {
+            color: #a16207;
+        }
+        
+        .gold .recipient-name {
+            border-bottom-color: #ca8a04;
+        }
+        
+        .gold .watermark {
+            color: rgba(202, 138, 4, 0.05);
+        }
+        
+        /* Dark theme */
+        {{#if (eq theme 'dark')}}
+        body {
+            background: #0f172a;
+        }
+        
+        .certificate {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border-color: #60a5fa;
+        }
+        
+        .certificate::before {
+            border-color: #93bbfc;
+        }
+        
+        .certificate-type {
+            color: #cbd5e1;
+        }
+        
+        .certificate-title {
+            color: #60a5fa;
+        }
+        
+        .presented-to {
+            color: #cbd5e1;
+        }
+        
+        .recipient-name {
+            color: #f1f5f9;
+            border-bottom-color: #60a5fa;
+        }
+        
+        .achievement {
+            color: #cbd5e1;
+        }
+        
+        .date-section {
+            color: #94a3b8;
+        }
+        
+        .signature-line {
+            border-bottom-color: #64748b;
+        }
+        
+        .signature-name {
+            color: #f1f5f9;
+        }
+        
+        .signature-title {
+            color: #94a3b8;
+        }
+        
+        .watermark {
+            color: rgba(96, 165, 250, 0.05);
+        }
+        {{/if}}
+        
+        /* Sepia theme */
+        {{#if (eq theme 'sepia')}}
+        body {
+            background: #f4f1ea;
+        }
+        
+        .certificate {
+            background: linear-gradient(135deg, #faf8f4 0%, #f4f1ea 100%);
+            border-color: #8b6914;
+        }
+        
+        .certificate::before {
+            border-color: #d4a017;
+        }
+        
+        .certificate-title {
+            color: #713f12;
+        }
+        
+        .recipient-name {
+            border-bottom-color: #8b6914;
+        }
+        
+        .watermark {
+            color: rgba(139, 105, 20, 0.05);
+        }
+        {{/if}}
+    </style>
+</head>
+<body>
+    <div class="certificate {{#if data.theme}}{{data.theme}}{{/if}}">
+        {{#if data.watermark}}
+        <div class="watermark">{{data.watermark}}</div>
+        {{/if}}
+        
+        <div class="content">
+            {{#if logo}}
+            <div class="logo">
+                <img src="{{logo.url}}" alt="Logo">
+            </div>
+            {{/if}}
+            
+            {{#if data.type}}
+            <div class="certificate-type">{{data.type}}</div>
+            {{/if}}
+            
+            <h1 class="certificate-title">
+                {{#if data.title}}{{data.title}}{{else}}Certificate of Achievement{{/if}}
+            </h1>
+            
+            <div class="presented-to">
+                {{#if data.presentedTo}}{{data.presentedTo}}{{else}}This is to certify that{{/if}}
+            </div>
+            
+            <div class="recipient-name">
+                {{data.recipient}}
+            </div>
+            
+            <div class="achievement">
+                {{{data.achievement}}}
+            </div>
+            
+            {{#if data.date}}
+            <div class="date-section">
+                {{#if data.datePrefix}}{{data.datePrefix}}{{else}}Awarded on{{/if}} {{data.date}}
+            </div>
+            {{/if}}
+            
+            <div class="signatures">
+                {{#each data.signatures}}
+                <div class="signature-block">
+                    <div class="signature-line">
+                        {{#if image}}
+                        <img src="{{image}}" alt="Signature" class="signature-image">
+                        {{/if}}
+                    </div>
+                    <div class="signature-name">{{name}}</div>
+                    {{#if title}}
+                    <div class="signature-title">{{title}}</div>
+                    {{/if}}
+                </div>
+                {{/each}}
+            </div>
+        </div>
+        
+        {{#if data.certificateId}}
+        <div class="certificate-id">
+            Certificate ID: {{data.certificateId}}
+        </div>
+        {{/if}}
+        
+        {{#if qrCode}}
+        <div class="qr-code">
+            <img src="{{qrCodeDataUrl}}" width="{{#if qrCode.size}}{{qrCode.size}}{{else}}100{{/if}}" height="{{#if qrCode.size}}{{qrCode.size}}{{else}}100{{/if}}">
+        </div>
+        {{/if}}
+    </div>
+</body>
+</html>

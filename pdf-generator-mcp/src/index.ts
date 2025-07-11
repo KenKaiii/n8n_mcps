@@ -1,0 +1,56 @@
+#!/usr/bin/env node
+/**
+ * MCP server for generating beautiful PDF documents
+ * Supports technical documentation, research papers, and everyday documents
+ */
+
+// Load environment variables from .env file
+import dotenv from 'dotenv';
+dotenv.config();
+
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { setupTools } from './tools.js';
+
+// Initialize the MCP server
+const server = new Server(
+  {
+    name: 'pdf-generator-mcp',
+    version: '1.0.0',
+  },
+  {
+    capabilities: {
+      tools: {},
+      resources: {},
+      prompts: {},
+    },
+  }
+);
+
+// Override protocol version handling to accept any version (for n8n compatibility)
+(server as any).protocolVersion = '2025-03-26';
+
+// Set up tools
+setupTools(server);
+
+// Start the server
+async function main() {
+  console.error('Starting PDF Generator MCP server...');
+
+  // Ensure stdout is unbuffered for SSE
+  if (process.stdout.isTTY === false) {
+    process.stdout.setDefaultEncoding('utf-8');
+  }
+
+  const transport = new StdioServerTransport();
+
+  console.error('Connecting transport...');
+  await server.connect(transport);
+  console.error('PDF Generator MCP server started and ready');
+}
+
+main().catch(error => {
+  console.error('Server error:', error);
+  console.error('Stack trace:', error.stack);
+  process.exit(1);
+});

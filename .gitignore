@@ -1,0 +1,62 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Build outputs
+dist/
+*/dist/
+build/
+*/build/
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Test coverage
+coverage/
+*.lcov
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Project specific
+memories.json
+test-*.js
+test-*.ts
+sse-server.log
+mcp-proxy.log
+supergateway.log
+
+# YouTube MCP specific
+youtube-mcp/node_modules/
+youtube-mcp/dist/
+youtube-mcp/.env
+youtube-mcp/.env.local
+youtube-mcp/*.log
+youtube-mcp/build/
+youtube-mcp/coverage/
+
+# Railway deployment files
+.dockerignore
+Dockerfile
+railway.json
+deploy-railway.sh

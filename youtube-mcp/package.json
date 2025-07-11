@@ -1,0 +1,62 @@
+{
+  "name": "youtube-analyzer-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for: Create a YouTube analysis MCP server that takes a video idea as input and returns 10 high-perform...",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "youtube-analyzer-mcp": "./bin/run.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "dev:sse": "tsx src/sse-server.ts",
+    "start:sse": "node dist/sse-server.js",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "API",
+    "integration"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.15.0",
+    "compromise": "latest",
+    "express": "^5.1.0",
+    "natural": "latest"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20.0.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  },
+  "jest": {
+    "preset": "ts-jest/presets/default-esm",
+    "testEnvironment": "node",
+    "extensionsToTreatAsEsm": [
+      ".ts"
+    ],
+    "transform": {
+      "^.+\\.ts$": [
+        "ts-jest",
+        {
+          "useESM": true
+        }
+      ]
+    },
+    "moduleNameMapper": {
+      "^(.*)\\.js$": "$1"
+    }
+  }
+}

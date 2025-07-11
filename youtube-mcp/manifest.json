@@ -1,0 +1,101 @@
+{
+  "dxt_version": "0.1",
+  "name": "youtube-analyzer-mcp",
+  "version": "1.0.0",
+  "display_name": "YouTube Analyzer",
+  "description": "Analyzes video ideas and returns high-performing titles/thumbnails from YouTube",
+  "long_description": "YouTube Analyzer MCP helps content creators find proven, successful title and thumbnail combinations from recent high-performing videos. It searches for related videos using the YouTube Data API v3, applies semantic search for broader relevance, filters results to videos from the last 30 days with high view counts, and manages API quota efficiently. The server provides comprehensive analysis tools including performance metrics tracking, title optimization suggestions, and thumbnail recommendations.",
+  "author": {
+    "name": "YouTube Analyzer Team",
+    "email": "support@youtube-analyzer.com"
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.js"]
+    }
+  },
+  "tools": [
+    {
+      "name": "analyze_video_idea",
+      "description": "Analyze a video idea and find high-performing related videos with titles and thumbnails"
+    },
+    {
+      "name": "get_quota_status",
+      "description": "Check current YouTube API quota usage"
+    },
+    {
+      "name": "expand_search_terms",
+      "description": "Generate semantic variations of a video idea for broader search"
+    },
+    {
+      "name": "get_performance_metrics",
+      "description": "Get detailed performance metrics and analytics"
+    }
+  ],
+  "prompts": [
+    {
+      "name": "analyze_video_performance",
+      "description": "Analyze video performance metrics and provide insights",
+      "arguments": ["videoIdea"],
+      "text": "Analyze the performance metrics for videos related to '${arguments.videoIdea}'. Look at view counts, engagement rates, publish times, and other factors that contribute to their success. Provide actionable insights for content creators."
+    },
+    {
+      "name": "optimize_title",
+      "description": "Get title optimization suggestions based on high-performing videos",
+      "arguments": ["videoIdea"],
+      "text": "Based on high-performing YouTube videos about '${arguments.videoIdea}', suggest optimized video titles. Analyze patterns in successful titles including length, keywords, emotional triggers, and formatting. Provide 5-10 title suggestions."
+    },
+    {
+      "name": "thumbnail_suggestions",
+      "description": "Get thumbnail design suggestions based on successful patterns",
+      "arguments": ["videoIdea"],
+      "text": "Analyze thumbnail patterns from high-performing videos about '${arguments.videoIdea}'. Describe common elements like text overlay styles, color schemes, facial expressions, and composition. Provide specific thumbnail design recommendations."
+    }
+  ],
+  "keywords": [
+    "youtube",
+    "video",
+    "analytics",
+    "content creator",
+    "seo",
+    "thumbnail",
+    "title optimization"
+  ],
+  "license": "MIT",
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
+  },
+  "user_config": {
+    "youtube_api_key": {
+      "type": "string",
+      "title": "YouTube API Key",
+      "description": "Your YouTube Data API v3 key (has default for personal use)",
+      "required": false,
+      "sensitive": true
+    },
+    "min_view_count": {
+      "type": "number",
+      "title": "Minimum View Count",
+      "description": "Minimum view count for videos to consider (default: 10000)",
+      "default": 10000
+    },
+    "max_results": {
+      "type": "number",
+      "title": "Maximum Results",
+      "description": "Maximum number of results to return (default: 10)",
+      "default": 10
+    },
+    "cache_ttl": {
+      "type": "number",
+      "title": "Cache TTL (minutes)",
+      "description": "How long to cache search results (default: 15)",
+      "default": 15
+    }
+  }
+}

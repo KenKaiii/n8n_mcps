@@ -112,6 +112,40 @@ function highlightCode(code: string, language: string): string {
 async function markdownToHtml(markdown: string, options?: { highlight?: boolean }): Promise<string> {
   const renderer = new marked.Renderer();
 
+  // Custom renderer for blockquotes that might be callout boxes
+  renderer.blockquote = (quote: string) => {
+    // Check if this is a callout box (starts with [!type])
+    const calloutMatch = quote.match(/^<p>\[!(\w+)\]\s*(.+)/s);
+    if (calloutMatch) {
+      const type = calloutMatch[1].toLowerCase();
+      const content = calloutMatch[2].replace(/<\/p>$/, '');
+      const typeMap: Record<string, string> = {
+        'note': 'info',
+        'info': 'info',
+        'tip': 'success',
+        'warning': 'warning',
+        'caution': 'warning',
+        'danger': 'error',
+        'error': 'error'
+      };
+      const calloutType = typeMap[type] || 'info';
+      return `<div class="callout callout-${calloutType}">${content}</div>`;
+    }
+    return `<blockquote>${quote}</blockquote>`;
+  };
+
+  // Enhanced list rendering with better nesting support
+  renderer.list = (body: string, ordered: boolean, start: number) => {
+    const type = ordered ? 'ol' : 'ul';
+    const startAttr = ordered && start !== 1 ? ` start="${start}"` : '';
+    return `<${type}${startAttr}>${body}</${type}>`;
+  };
+
+  // Support for horizontal rules as dividers
+  renderer.hr = () => {
+    return '<hr class="divider" />';
+  };
+
   if (options?.highlight) {
     const markedOptions: any = {
       highlight: (code: string, lang: string) => {
@@ -119,12 +153,24 @@ async function markdownToHtml(markdown: string, options?: { highlight?: boolean 
           return highlightCode(code, lang);
         }
         return code;
-      }
+      },
+      breaks: true, // Enable line breaks
+      gfm: true, // GitHub Flavored Markdown
+      tables: true // Enable tables
     };
     marked.setOptions(markedOptions);
   }
 
-  return marked(markdown, { renderer });
+  // Process markdown with enhanced formatting
+  let html = marked(markdown, { renderer });
+
+  // Post-process for additional formatting
+  // Add support for text alignment (e.g., ->centered text<-)
+  html = html.replace(/->\s*(.+?)\s*<-/g, '<div class="text-center">$1</div>');
+  // Add support for right alignment (e.g., >>right aligned text)
+  html = html.replace(/^>>\s*(.+?)$/gm, '<div class="text-right">$1</div>');
+
+  return html;
 }
 
 /**
@@ -196,6 +242,138 @@ function getBaseCSS(theme: string = 'light'): string {
         margin: 1em 0;
       }
 
+      /* Typography enhancements */
+      strong, b {
+        font-weight: 700;
+        color: ${t.heading};
+      }
+
+      em, i {
+        font-style: italic;
+      }
+
+      u {
+        text-decoration: underline;
+      }
+
+      del, s {
+        text-decoration: line-through;
+        opacity: 0.7;
+      }
+
+      /* Lists styling */
+      ul, ol {
+        margin: 1em 0;
+        padding-left: 2em;
+      }
+
+      ul li {
+        list-style-type: disc;
+        margin: 0.5em 0;
+      }
+
+      ul ul li {
+        list-style-type: circle;
+      }
+
+      ul ul ul li {
+        list-style-type: square;
+      }
+
+      ol li {
+        list-style-type: decimal;
+        margin: 0.5em 0;
+      }
+
+      /* Blockquotes */
+      blockquote {
+        margin: 1em 0;
+        padding: 1em 1.5em;
+        border-left: 4px solid ${t.accent};
+        background: ${t.code};
+        font-style: italic;
+      }
+
+      blockquote p:first-child {
+        margin-top: 0;
+      }
+
+      blockquote p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* Horizontal rules */
+      hr {
+        margin: 2em 0;
+        border: none;
+        border-top: 2px solid ${t.codeBorder};
+      }
+
+      /* Text alignment utilities */
+      .text-left { text-align: left; }
+      .text-center { text-align: center; }
+      .text-right { text-align: right; }
+      .text-justify { text-align: justify; }
+
+      /* Callout boxes */
+      .callout {
+        margin: 1em 0;
+        padding: 1em;
+        border-radius: 6px;
+        border: 1px solid;
+      }
+
+      .callout-info {
+        background: #e3f2fd;
+        border-color: #2196f3;
+        color: #0d47a1;
+      }
+
+      .callout-warning {
+        background: #fff3cd;
+        border-color: #ffc107;
+        color: #856404;
+      }
+
+      .callout-success {
+        background: #d4edda;
+        border-color: #28a745;
+        color: #155724;
+      }
+
+      .callout-error {
+        background: #f8d7da;
+        border-color: #dc3545;
+        color: #721c24;
+      }
+
+      /* Dark theme adjustments */
+      ${theme === 'dark' ? `
+      .callout-info {
+        background: #1e3a5f;
+        border-color: #2196f3;
+        color: #90caf9;
+      }
+
+      .callout-warning {
+        background: #5d4e37;
+        border-color: #ffc107;
+        color: #ffecb3;
+      }
+
+      .callout-success {
+        background: #1b5e20;
+        border-color: #4caf50;
+        color: #a5d6a7;
+      }
+
+      .callout-error {
+        background: #5f2120;
+        border-color: #f44336;
+        color: #ef9a9a;
+      }
+      ` : ''}
+
       code {
         font-family: 'Fira Code', monospace;
         background: ${t.code};
@@ -253,6 +431,32 @@ function getBaseCSS(theme: string = 'light'): string {
 
       .page-break {
         page-break-after: always;
+      }
+
+      /* Additional utilities */
+      .mb-0 { margin-bottom: 0; }
+      .mt-0 { margin-top: 0; }
+      .mb-1 { margin-bottom: 0.25em; }
+      .mt-1 { margin-top: 0.25em; }
+      .mb-2 { margin-bottom: 0.5em; }
+      .mt-2 { margin-top: 0.5em; }
+      .mb-4 { margin-bottom: 1em; }
+      .mt-4 { margin-top: 1em; }
+
+      .font-bold { font-weight: 700; }
+      .font-normal { font-weight: 400; }
+      .italic { font-style: italic; }
+
+      /* Section dividers */
+      .divider {
+        margin: 2em 0;
+        text-align: center;
+        color: ${t.codeBorder};
+      }
+
+      .divider::before {
+        content: "•••";
+        letter-spacing: 1em;
       }
 
       @media print {

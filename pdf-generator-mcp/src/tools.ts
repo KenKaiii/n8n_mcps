@@ -33,7 +33,19 @@ export function setupTools(server: Server) {
       tools: [
         {
           name: 'generate_technical_pdf',
-          description: `Generate a beautiful technical documentation PDF with code examples, diagrams, and professional formatting. Automatically publishes to GitHub (${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}). Perfect for API docs, system architecture, technical guides.`,
+          description: `Generate a beautiful technical documentation PDF with code examples, diagrams, and professional formatting. Automatically publishes to GitHub (${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}). Perfect for API docs, system architecture, technical guides.
+
+MARKDOWN FORMATTING SUPPORTED:
+• Text: **bold**, *italic*, ***bold italic***, ~~strikethrough~~, \`inline code\`
+• Lists: Ordered (1. 2. 3.) and unordered (- or *), with nesting support
+• Blockquotes: > for quotes with left border and italic style
+• Callout boxes: > [!NOTE], > [!TIP], > [!WARNING], > [!DANGER] for colored alert boxes
+• Text alignment: ->centered<-, >>right-aligned
+• Tables: Full markdown table support with formatting inside cells
+• Code blocks: Triple backticks with syntax highlighting for multiple languages
+• Dividers: --- for horizontal rules
+• Links: [text](url) format
+• Images: ![alt text](url) format`,
           inputSchema: {
             type: 'object',
             properties: {
@@ -48,7 +60,7 @@ export function setupTools(server: Server) {
                   type: 'object',
                   properties: {
                     title: { type: 'string' },
-                    content: { type: 'string', description: 'Markdown content' },
+                    content: { type: 'string', description: 'Markdown content with full formatting support (see tool description)' },
                     level: { type: 'number', description: 'Heading level (1-6)' },
                   },
                   required: ['title', 'content'],
@@ -92,7 +104,19 @@ export function setupTools(server: Server) {
         },
         {
           name: 'generate_research_pdf',
-          description: `Generate a professional research paper or report PDF with abstract, citations, charts, and academic formatting. Automatically publishes to GitHub (${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}). Ideal for whitepapers, market research, academic papers.`,
+          description: `Generate a professional research paper or report PDF with abstract, citations, charts, and academic formatting. Automatically publishes to GitHub (${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}). Ideal for whitepapers, market research, academic papers.
+
+MARKDOWN FORMATTING SUPPORTED:
+• Text: **bold**, *italic*, ***bold italic***, ~~strikethrough~~, \`inline code\`
+• Lists: Ordered (1. 2. 3.) and unordered (- or *), with nesting support
+• Blockquotes: > for quotes with left border and italic style
+• Callout boxes: > [!NOTE], > [!TIP], > [!WARNING], > [!DANGER] for colored alert boxes
+• Text alignment: ->centered<-, >>right-aligned
+• Tables: Full markdown table support with formatting inside cells
+• Code blocks: Triple backticks with syntax highlighting for multiple languages
+• Dividers: --- for horizontal rules
+• Links: [text](url) format
+• Images: ![alt text](url) format`,
           inputSchema: {
             type: 'object',
             properties: {
@@ -124,7 +148,7 @@ export function setupTools(server: Server) {
                   type: 'object',
                   properties: {
                     title: { type: 'string' },
-                    content: { type: 'string', description: 'Markdown content' },
+                    content: { type: 'string', description: 'Markdown content with full formatting support (see tool description)' },
                     subsections: {
                       type: 'array',
                       items: {
@@ -192,7 +216,16 @@ export function setupTools(server: Server) {
         },
         {
           name: 'generate_everyday_pdf',
-          description: `Generate everyday documents like invoices, letters, certificates with beautiful templates. Automatically publishes to GitHub (${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}). Supports QR codes, signatures, and custom branding.`,
+          description: `Generate everyday documents like invoices, letters, certificates with beautiful templates. Automatically publishes to GitHub (${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}). Supports QR codes, signatures, and custom branding.
+
+MARKDOWN FORMATTING SUPPORTED IN TEXT FIELDS:
+• Text: **bold**, *italic*, ***bold italic***, ~~strikethrough~~, \`inline code\`
+• Lists: Ordered (1. 2. 3.) and unordered (- or *), with nesting support
+• Blockquotes: > for quotes with left border and italic style
+• Callout boxes: > [!NOTE], > [!TIP], > [!WARNING], > [!DANGER] for colored alert boxes
+• Text alignment: ->centered<-, >>right-aligned
+• Tables: Full markdown table support with formatting inside cells
+• Links: [text](url) format`,
           inputSchema: {
             type: 'object',
             properties: {
@@ -258,7 +291,22 @@ export function setupTools(server: Server) {
         },
         {
           name: 'generate_markdown_pdf',
-          description: `Convert markdown content to a beautiful PDF with syntax highlighting, custom styling. Automatically publishes to GitHub (${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}). Perfect for documentation, reports, articles.`,
+          description: `Convert markdown content to a beautiful PDF with syntax highlighting, custom styling. Automatically publishes to GitHub (${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}). Perfect for documentation, reports, articles.
+
+FULL MARKDOWN FORMATTING SUPPORT:
+• Text styles: **bold**, *italic*, ***bold italic***, ~~strikethrough~~, \`inline code\`
+• Headings: # H1, ## H2, ### H3, #### H4, ##### H5, ###### H6
+• Lists: Ordered (1. 2. 3.) and unordered (- or *), with full nesting support
+• Blockquotes: > for quotes with left border and italic style
+• Callout boxes: > [!NOTE] (blue), > [!TIP] (green), > [!WARNING] (yellow), > [!DANGER] (red)
+• Text alignment: ->centered text<-, >>right-aligned text
+• Tables: | Header | Header | with full cell formatting support
+• Code blocks: \`\`\`language for syntax highlighting (js, python, java, etc.)
+• Horizontal rules: --- or *** or ___
+• Links: [link text](https://url.com)
+• Images: ![alt text](image-url)
+• Line breaks: Two spaces at end of line or <br>
+• HTML: Limited HTML tags supported for advanced formatting`,
           inputSchema: {
             type: 'object',
             properties: {
@@ -268,7 +316,7 @@ export function setupTools(server: Server) {
               },
               markdown: {
                 type: 'string',
-                description: 'Markdown content to convert',
+                description: 'Markdown content to convert (see tool description for all supported formatting)',
               },
               includeHighlighting: {
                 type: 'boolean',
@@ -302,7 +350,7 @@ export function setupTools(server: Server) {
         },
         {
           name: 'generate_and_download',
-          description: 'Generate a PDF and return it as base64 without publishing to GitHub. Use this when you want to preview or download the PDF directly.',
+          description: 'Generate a PDF and return it as base64 without publishing to GitHub. Use this when you want to preview or download the PDF directly. All PDF types support the same markdown formatting as their respective generate_* tools.',
           inputSchema: {
             type: 'object',
             properties: {

@@ -30,7 +30,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@modelcontextprotocol/sdk": "^1.15.1",
     "@mozilla/readability": "latest",
     "@octokit/rest": "latest",
     "@octokit/types": "latest",

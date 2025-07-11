@@ -27,6 +27,9 @@ const server = new Server(
   }
 );
 
+// Override protocol version handling to accept any version
+(server as any).protocolVersion = '2025-03-26';
+
 // Set up tools
 setupTools(server);
 

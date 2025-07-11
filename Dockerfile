@@ -41,4 +41,4 @@ RUN chmod +x start-server.sh
 EXPOSE 8081
 
 # Start with supergateway - Railway provides PORT env var
-CMD ["sh", "-c", "supergateway --port ${PORT:-8081} --stdio ./start-server.sh"]
+CMD ["sh", "-c", "supergateway --port ${PORT:-8081} --stdio sh start-server.sh"]

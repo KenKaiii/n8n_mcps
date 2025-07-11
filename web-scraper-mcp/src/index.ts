@@ -15,7 +15,7 @@ import { setupTools } from './tools.js';
 // Initialize the MCP server
 const server = new Server(
   {
-    name: 'feature-mcp',
+    name: 'web-scraper-mcp',
     version: '1.0.0',
   },
   {

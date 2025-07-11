@@ -1,3 +1,21 @@
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files from web-scraper-mcp directory
+COPY web-scraper-mcp/package*.json ./
+
+# Install all dependencies (including dev dependencies for building)
+RUN npm ci
+
+# Copy source files
+COPY web-scraper-mcp/tsconfig.json ./
+COPY web-scraper-mcp/src ./src
+
+# Build the TypeScript project
+RUN npm run build
+
+# Production stage
 FROM node:20-alpine
 
 WORKDIR /app
@@ -6,8 +24,8 @@ WORKDIR /app
 COPY web-scraper-mcp/package*.json ./
 RUN npm ci --only=production
 
-# Copy built files
-COPY web-scraper-mcp/dist ./dist
+# Copy built files from builder stage
+COPY --from=builder /app/dist ./dist
 COPY web-scraper-mcp/start-server.sh ./
 
 # Create .env file from environment variables

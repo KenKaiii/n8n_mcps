@@ -1,0 +1,28 @@
+# Ignore development files
+node_modules/
+npm-debug.log
+.env
+.env.local
+test/
+.vscode/
+.DS_Store
+*.log
+coverage/
+.nyc_output/
+jest.config.js
+eslint.config.js
+.prettierrc.json
+
+# Ignore build output (will be built in Docker)
+dist/
+
+# Ignore documentation
+*.md
+CLAUDE.md
+README.md
+
+# Keep only what's needed
+!src/
+!package.json
+!package-lock.json
+!tsconfig.json

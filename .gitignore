@@ -55,8 +55,8 @@ youtube-mcp/*.log
 youtube-mcp/build/
 youtube-mcp/coverage/
 
-# Railway deployment files
-.dockerignore
-Dockerfile
-railway.json
+# Railway deployment files at root only
+/.dockerignore
+/Dockerfile
+/railway.json
 deploy-railway.sh

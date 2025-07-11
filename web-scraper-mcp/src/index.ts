@@ -12,6 +12,8 @@ dotenv.config();
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { setupTools } from './tools.js';
+import { setupResources } from './resources.js';
+import { setupPrompts } from './prompts.js';
 
 // Production logger - MUST use stderr for MCP servers
 const logger = {
@@ -69,6 +71,28 @@ try {
   throw error;
 }
 
+try {
+  setupResources(server);
+  logger.info('Resources configured successfully');
+} catch (error) {
+  logger.error('Failed to setup resources', {
+    error: error instanceof Error ? error.message : String(error),
+    stack: error instanceof Error ? error.stack : undefined
+  });
+  throw error;
+}
+
+try {
+  setupPrompts(server);
+  logger.info('Prompts configured successfully');
+} catch (error) {
+  logger.error('Failed to setup prompts', {
+    error: error instanceof Error ? error.message : String(error),
+    stack: error instanceof Error ? error.stack : undefined
+  });
+  throw error;
+}
+
 /**
  * Start the Web Scraper MCP server with comprehensive error handling
  */
@@ -87,7 +111,7 @@ async function main(): Promise<void> {
     logger.info('Web Scraper MCP server started successfully', {
       serverName: 'web-scraper-mcp',
       version: '1.0.0',
-      capabilities: ['tools'],
+      capabilities: ['tools', 'resources', 'prompts']
     });
   } catch (error) {
     logger.error('Failed to start Web Scraper MCP server', {

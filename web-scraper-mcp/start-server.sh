@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Load environment variables from .env if it exists
 if [ -f .env ]; then

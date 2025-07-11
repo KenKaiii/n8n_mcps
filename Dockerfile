@@ -40,5 +40,8 @@ RUN chmod +x start-server.sh
 # Expose port - Railway will override this
 EXPOSE 8081
 
+# Set GITHUB_TOKEN from environment
+ENV GITHUB_TOKEN=${GITHUB_TOKEN}
+
 # Start with supergateway - Railway provides PORT env var
-CMD ["sh", "-c", "supergateway --port ${PORT:-8081} --stdio sh start-server.sh"]
+CMD ["sh", "-c", "supergateway --port ${PORT:-8081} --stdio node dist/index.js"]

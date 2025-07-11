@@ -9,6 +9,7 @@
     "web-scraper-mcp": "./bin/run.js"
   },
   "scripts": {
+    "start": "node dist/index.js",
     "build": "tsc",
     "dev": "tsx src/index.ts",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",

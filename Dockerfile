@@ -2,13 +2,13 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy package files from web-scraper-mcp directory
+COPY web-scraper-mcp/package*.json ./
 RUN npm ci --only=production
 
 # Copy built files
-COPY dist ./dist
-COPY start-server.sh ./
+COPY web-scraper-mcp/dist ./dist
+COPY web-scraper-mcp/start-server.sh ./
 
 # Create .env file from environment variables
 RUN touch .env

@@ -1,0 +1,30 @@
+# Ignore everything at root except web-scraper-mcp
+/*
+!/web-scraper-mcp/
+
+# Inside web-scraper-mcp, ignore development files
+web-scraper-mcp/node_modules/
+web-scraper-mcp/npm-debug.log
+web-scraper-mcp/.env
+web-scraper-mcp/.env.local
+web-scraper-mcp/src/
+web-scraper-mcp/test/
+web-scraper-mcp/test-*.ts
+web-scraper-mcp/test-*.js
+web-scraper-mcp/.vscode/
+web-scraper-mcp/.DS_Store
+web-scraper-mcp/*.log
+web-scraper-mcp/coverage/
+web-scraper-mcp/.nyc_output/
+web-scraper-mcp/jest.config.js
+web-scraper-mcp/tsconfig.json
+web-scraper-mcp/eslint.config.js
+web-scraper-mcp/.prettierrc.json
+web-scraper-mcp/memories.json
+web-scraper-mcp/sse-server.log
+
+# Keep only what we need for production
+!web-scraper-mcp/dist/
+!web-scraper-mcp/package.json
+!web-scraper-mcp/package-lock.json
+!web-scraper-mcp/start-server.sh

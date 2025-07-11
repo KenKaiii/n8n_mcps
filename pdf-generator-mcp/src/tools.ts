@@ -85,6 +85,11 @@ MARKDOWN FORMATTING SUPPORTED:
                 enum: ['light', 'dark', 'sepia'],
                 description: 'Color theme',
               },
+              fontStyle: {
+                type: 'string',
+                enum: ['modern', 'classic', 'professional', 'elegant', 'technical'],
+                description: 'Font style: modern (Inter), classic (Merriweather), professional (Roboto), elegant (Lora), technical (IBM Plex)',
+              },
               includeTableOfContents: {
                 type: 'boolean',
                 description: 'Include table of contents',
@@ -201,6 +206,11 @@ MARKDOWN FORMATTING SUPPORTED:
                 type: 'string',
                 enum: ['light', 'dark', 'sepia'],
               },
+              fontStyle: {
+                type: 'string',
+                enum: ['modern', 'classic', 'professional', 'elegant', 'technical'],
+                description: 'Font style: modern (Inter), classic (Merriweather), professional (Roboto), elegant (Lora), technical (IBM Plex)',
+              },
               publishToGithub: {
                 type: 'boolean',
                 description: 'Publish to GitHub repository',
@@ -276,6 +286,11 @@ MARKDOWN FORMATTING SUPPORTED IN TEXT FIELDS:
                 type: 'string',
                 enum: ['light', 'dark', 'sepia'],
               },
+              fontStyle: {
+                type: 'string',
+                enum: ['modern', 'classic', 'professional', 'elegant', 'technical'],
+                description: 'Font style: modern (Inter), classic (Merriweather), professional (Roboto), elegant (Lora), technical (IBM Plex)',
+              },
               publishToGithub: {
                 type: 'boolean',
                 description: 'Publish to GitHub repository',
@@ -331,6 +346,11 @@ FULL MARKDOWN FORMATTING SUPPORT:
                 type: 'string',
                 enum: ['light', 'dark', 'sepia'],
               },
+              fontStyle: {
+                type: 'string',
+                enum: ['modern', 'classic', 'professional', 'elegant', 'technical'],
+                description: 'Font style: modern (Inter), classic (Merriweather), professional (Roboto), elegant (Lora), technical (IBM Plex)',
+              },
               format: {
                 type: 'string',
                 enum: ['A4', 'Letter', 'Legal'],
@@ -383,6 +403,7 @@ FULL MARKDOWN FORMATTING SUPPORT:
             sections: args.sections,
             codeExamples: args.codeExamples,
             theme: args.theme || PDF_CONFIG.defaultTheme,
+            fontStyle: args.fontStyle || 'modern',
             includeTableOfContents: args.includeTableOfContents,
             includePageNumbers: true,
             publishToGithub: args.publishToGithub !== false,
@@ -449,6 +470,7 @@ FULL MARKDOWN FORMATTING SUPPORT:
             citations: args.citations,
             charts: args.charts,
             theme: args.theme || PDF_CONFIG.defaultTheme,
+            fontStyle: args.fontStyle || 'modern',
             includeAbstract: true,
             citationStyle: args.citationStyle || 'APA',
             publishToGithub: args.publishToGithub !== false,
@@ -515,6 +537,7 @@ FULL MARKDOWN FORMATTING SUPPORT:
             signature: args.signature,
             qrCode: args.qrCode,
             theme: args.theme || PDF_CONFIG.defaultTheme,
+            fontStyle: args.fontStyle || 'modern',
             publishToGithub: args.publishToGithub !== false,
             githubPath: args.githubPath,
             metadata: {
@@ -576,6 +599,7 @@ FULL MARKDOWN FORMATTING SUPPORT:
             includeHighlighting: args.includeHighlighting !== false,
             customCSS: args.customCSS,
             theme: args.theme || PDF_CONFIG.defaultTheme,
+            fontStyle: args.fontStyle || 'modern',
             format: args.format || PDF_CONFIG.defaultFormat,
             publishToGithub: args.publishToGithub !== false,
             githubPath: args.githubPath,

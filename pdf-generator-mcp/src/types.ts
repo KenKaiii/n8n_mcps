@@ -6,6 +6,7 @@ export interface PDFGenerationOptions {
   title: string;
   template?: 'technical' | 'research' | 'everyday';
   theme?: 'light' | 'dark' | 'sepia';
+  fontStyle?: 'modern' | 'classic' | 'professional' | 'elegant' | 'technical';
   format?: 'A4' | 'Letter' | 'Legal';
   orientation?: 'portrait' | 'landscape';
   margins?: {

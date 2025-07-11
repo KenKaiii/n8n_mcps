@@ -174,9 +174,45 @@ async function markdownToHtml(markdown: string, options?: { highlight?: boolean 
 }
 
 /**
+ * Font configurations
+ */
+const fontConfigs = {
+  modern: {
+    import: '@import url(\'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@300;400;500;600;700&display=swap\');',
+    body: '\'Inter\', -apple-system, BlinkMacSystemFont, sans-serif',
+    heading: '\'Inter\', -apple-system, BlinkMacSystemFont, sans-serif',
+    code: '\'Fira Code\', \'Courier New\', monospace'
+  },
+  classic: {
+    import: '@import url(\'https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Source+Sans+Pro:wght@400;600;700&family=Source+Code+Pro:wght@400;500;600&display=swap\');',
+    body: '\'Merriweather\', Georgia, serif',
+    heading: '\'Source Sans Pro\', Arial, sans-serif',
+    code: '\'Source Code Pro\', \'Courier New\', monospace'
+  },
+  professional: {
+    import: '@import url(\'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Slab:wght@400;600;700&family=Roboto+Mono:wght@400;500;600&display=swap\');',
+    body: '\'Roboto\', Arial, sans-serif',
+    heading: '\'Roboto Slab\', Georgia, serif',
+    code: '\'Roboto Mono\', \'Courier New\', monospace'
+  },
+  elegant: {
+    import: '@import url(\'https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Montserrat:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap\');',
+    body: '\'Lora\', Georgia, serif',
+    heading: '\'Montserrat\', Arial, sans-serif',
+    code: '\'JetBrains Mono\', \'Courier New\', monospace'
+  },
+  technical: {
+    import: '@import url(\'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap\');',
+    body: '\'IBM Plex Sans\', Arial, sans-serif',
+    heading: '\'IBM Plex Sans\', Arial, sans-serif',
+    code: '\'IBM Plex Mono\', \'Courier New\', monospace'
+  }
+};
+
+/**
  * Get base CSS for all templates
  */
-function getBaseCSS(theme: string = 'light'): string {
+function getBaseCSS(theme: string = 'light', fontStyle: string = 'modern'): string {
   const themes = {
     light: {
       bg: '#ffffff',
@@ -206,9 +242,11 @@ function getBaseCSS(theme: string = 'light'): string {
 
   const t = themes[theme as keyof typeof themes] || themes.light;
 
+  const fonts = fontConfigs[fontStyle as keyof typeof fontConfigs] || fontConfigs.modern;
+
   return `
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@300;400;500;600;700&display=swap');
+      ${fonts.import}
 
       * {
         margin: 0;
@@ -217,18 +255,24 @@ function getBaseCSS(theme: string = 'light'): string {
       }
 
       body {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        font-family: ${fonts.body};
         line-height: 1.6;
         color: ${t.text};
         background: ${t.bg};
         padding: 40px;
+        font-size: 16px;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
 
       h1, h2, h3, h4, h5, h6 {
+        font-family: ${fonts.heading};
         color: ${t.heading};
         margin: 1.5em 0 0.5em;
         font-weight: 600;
         line-height: 1.2;
+        letter-spacing: -0.02em;
       }
 
       h1 { font-size: 2.5em; }
@@ -375,7 +419,7 @@ function getBaseCSS(theme: string = 'light'): string {
       ` : ''}
 
       code {
-        font-family: 'Fira Code', monospace;
+        font-family: ${fonts.code};
         background: ${t.code};
         border: 1px solid ${t.codeBorder};
         padding: 0.2em 0.4em;
@@ -466,6 +510,46 @@ function getBaseCSS(theme: string = 'light'): string {
       }
     </style>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* Override Tailwind's CSS reset for lists */
+      ul {
+        list-style-type: disc !important;
+        padding-left: 2em !important;
+      }
+
+      ol {
+        list-style-type: decimal !important;
+        padding-left: 2em !important;
+      }
+
+      ul ul {
+        list-style-type: circle !important;
+      }
+
+      ul ul ul {
+        list-style-type: square !important;
+      }
+
+      /* Ensure list items show bullets/numbers */
+      li {
+        display: list-item !important;
+      }
+
+      /* For Tailwind prose class compatibility */
+      .prose ul {
+        list-style-type: disc !important;
+        padding-left: 2em !important;
+      }
+
+      .prose ol {
+        list-style-type: decimal !important;
+        padding-left: 2em !important;
+      }
+
+      .prose li {
+        margin: 0.5em 0 !important;
+      }
+    </style>
   `;
 }
 
@@ -529,7 +613,7 @@ export async function generatePDF(
 export async function generateTechnicalPDF(
   options: TechnicalPDFOptions
 ): Promise<PDFGenerationResult> {
-  const css = getBaseCSS(options.theme);
+  const css = getBaseCSS(options.theme, options.fontStyle);
 
   // Build HTML content
   let html = `
@@ -623,7 +707,7 @@ export async function generateTechnicalPDF(
 export async function generateResearchPDF(
   options: ResearchPDFOptions
 ): Promise<PDFGenerationResult> {
-  const css = getBaseCSS(options.theme);
+  const css = getBaseCSS(options.theme, options.fontStyle);
 
   let html = `
     <!DOCTYPE html>
@@ -783,7 +867,7 @@ export async function generateEverydayPDF(
   };
 
   // Generate HTML
-  const css = getBaseCSS(options.theme);
+  const css = getBaseCSS(options.theme, options.fontStyle);
   const html = `
     <!DOCTYPE html>
     <html>
@@ -807,7 +891,7 @@ export async function generateEverydayPDF(
 export async function generateMarkdownPDF(
   options: MarkdownToPDFOptions
 ): Promise<PDFGenerationResult> {
-  const css = getBaseCSS(options.theme);
+  const css = getBaseCSS(options.theme, options.fontStyle);
   const htmlContent = await markdownToHtml(options.markdown, {
     highlight: options.includeHighlighting
   });

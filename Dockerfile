@@ -44,4 +44,5 @@ EXPOSE 8081
 ENV GITHUB_TOKEN=${GITHUB_TOKEN}
 
 # Start with supergateway - Railway provides PORT env var
-CMD ["sh", "-c", "supergateway --port ${PORT:-8081} --stdio node dist/index.js"]
+# Redirect stderr to stdout to see logs in Railway
+CMD ["sh", "-c", "supergateway --port ${PORT:-8081} --stdio 'node dist/index.js 2>&1'"]

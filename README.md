@@ -1,17 +1,21 @@
 # Ken's n8n MCP Collection
 
 ```
-    ____                __    __   __  __    _____   ____     _____
-   / __ \_____ ____    / /   / /  / /_/ /_  / ___/  / __ \   / ___/
-  / /_/ / ___// __ \  / /   / /  / __/ __/  \__ \  / / / /   \__ \
- / ____/ /   / /_/ / / /___/ /__/ /_/ /_   ___/ / / /_/ /   ___/ /
-/_/   /_/    \____/ /_____/_____\__/\__/  /____/  \____/   /____/
+
+                _/_/
+   _/_/_/    _/    _/  _/_/_/        _/_/_/  _/_/      _/_/_/  _/_/_/      _/_/_/
+  _/    _/    _/_/    _/    _/      _/    _/    _/  _/        _/    _/  _/_/
+ _/    _/  _/    _/  _/    _/      _/    _/    _/  _/        _/    _/      _/_/
+_/    _/    _/_/    _/    _/      _/    _/    _/    _/_/_/  _/_/_/    _/_/_/
+                                                           _/
+                                                          _/
+By Ken Kai does AI
 
 ```
 
 **🤖 Power up your n8n workflows with 3 amazing AI-powered MCP servers!**
 
-*Created by [Ken](https://github.com/kenkai) to make no-code automation even more powerful* 🚀
+*Created by [Ken](https://skool.com/kenkai/about) to make no-code automation even more powerful* 🚀
 
 ---
 
@@ -41,7 +45,16 @@ Create beautiful PDFs from any content
 
 ---
 
-## 🚀 Quick Start for n8n Users
+## 🚀 Quick Start
+
+### **Get the Code**
+```bash
+git clone https://github.com/kenkai/n8n_mcps.git
+cd n8n_mcps
+code .
+```
+
+### **For n8n Users**
 
 ### 1. **Choose Your Adventure**
 Pick which MCP server you want to use (or use all three!):

@@ -67,6 +67,10 @@ EXPOSE 8080
 # Set GITHUB_TOKEN from environment
 ENV GITHUB_TOKEN=${GITHUB_TOKEN}
 
+# Set MCP_AUTH_TOKEN from environment
+ENV MCP_AUTH_TOKEN=${MCP_AUTH_TOKEN}
+
 # Start with supergateway - Railway provides PORT env var
 # Redirect stderr to stdout to see logs in Railway
-CMD ["sh", "-c", "supergateway --port ${PORT:-8080} --stdio 'node dist/index.js 2>&1'"]
+# Add bearer token authentication
+CMD ["sh", "-c", "supergateway --port ${PORT:-8080} --oauth2Bearer \"${MCP_AUTH_TOKEN}\" --stdio 'node dist/index.js 2>&1'"]

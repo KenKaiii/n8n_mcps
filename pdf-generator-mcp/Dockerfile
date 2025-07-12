@@ -66,6 +66,8 @@ ENV NODE_ENV=production
 ENV GITHUB_TOKEN=${GITHUB_TOKEN}
 ENV GITHUB_OWNER=${GITHUB_OWNER}
 ENV GITHUB_REPO=${GITHUB_REPO}
+ENV MCP_AUTH_TOKEN=${MCP_AUTH_TOKEN}
 
 # Start with supergateway - same approach as other MCPs
-CMD ["sh", "-c", "supergateway --port ${PORT:-8080} --stdio 'node dist/index.js 2>&1'"]
+# Add bearer token authentication
+CMD ["sh", "-c", "supergateway --port ${PORT:-8080} --oauth2Bearer \"${MCP_AUTH_TOKEN}\" --stdio 'node dist/index.js 2>&1'"]

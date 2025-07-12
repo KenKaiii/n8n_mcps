@@ -47,7 +47,7 @@ interface AnalysisResult {
 
 // Configuration from environment variables (set by Claude Desktop)
 const config = {
-  youtubeApiKey: process.env.YOUTUBE_API_KEY || 'AIzaSyAOy7e82PPybdYW82OADOsA5KeLwxkTkhE',
+  youtubeApiKey: process.env.YOUTUBE_API_KEY || '',
   minViewCount: parseInt(process.env.MIN_VIEW_COUNT || '10000'),
   maxResults: parseInt(process.env.MAX_RESULTS || '10'),
   cacheTtl: parseInt(process.env.CACHE_TTL || '15') * 60 * 1000 // Convert to milliseconds
@@ -97,12 +97,12 @@ class SimpleCache {
   get(key: string): any | null {
     const entry = this.cache.get(key);
     if (!entry) return null;
-    
+
     if (Date.now() > entry.timestamp + entry.ttl) {
       this.cache.delete(key);
       return null;
     }
-    
+
     return entry.data;
   }
 
@@ -113,7 +113,7 @@ class SimpleCache {
         this.cache.delete(firstKey);
       }
     }
-    
+
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
@@ -143,11 +143,11 @@ class RateLimiter {
     const now = Date.now();
     // Remove old requests outside the window
     this.requests = this.requests.filter(timestamp => now - timestamp < this.windowMs);
-    
+
     if (this.requests.length >= this.maxRequests) {
       return false;
     }
-    
+
     this.requests.push(now);
     return true;
   }
@@ -183,13 +183,13 @@ class RetryHandler {
 
   async execute<T>(fn: () => Promise<T>, context: string): Promise<T> {
     let lastError: Error | null = null;
-    
+
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
       try {
         return await fn();
       } catch (error) {
         lastError = error as Error;
-        
+
         if (attempt === this.maxRetries) {
           logger.error(`Max retries reached for ${context}`, {
             attempts: attempt + 1,
@@ -197,17 +197,17 @@ class RetryHandler {
           });
           break;
         }
-        
+
         const delay = Math.min(this.baseDelay * Math.pow(2, attempt), this.maxDelay);
         logger.warn(`Retry attempt ${attempt + 1} for ${context}`, {
           delay,
           error: lastError.message
         });
-        
+
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
-    
+
     throw lastError || new Error(`Failed after ${this.maxRetries + 1} attempts`);
   }
 }
@@ -244,32 +244,32 @@ class CircuitBreaker {
 
     try {
       const result = await fn();
-      
+
       if (this.state === 'half-open') {
         logger.info('Circuit breaker closing after successful request');
         this.state = 'closed';
         this.failures = 0;
       }
-      
+
       return result;
     } catch (error) {
       this.failures++;
       this.lastFailTime = Date.now();
-      
+
       if (this.failures >= this.threshold) {
         logger.error('Circuit breaker opening due to excessive failures', {
           failures: this.failures,
           threshold: this.threshold
         });
         this.state = 'open';
-        
+
         // Schedule automatic reset
         setTimeout(() => {
           logger.info('Circuit breaker auto-reset to half-open');
           this.state = 'half-open';
         }, this.resetTimeout);
       }
-      
+
       throw error;
     }
   }
@@ -313,7 +313,7 @@ class MetricsCollector {
 
   recordRequest(success: boolean, responseTime: number, cached: boolean = false): void {
     this.metrics.requests.total++;
-    
+
     if (cached) {
       this.metrics.requests.cached++;
     } else if (success) {
@@ -321,13 +321,13 @@ class MetricsCollector {
     } else {
       this.metrics.requests.failed++;
     }
-    
+
     if (!cached && responseTime > 0) {
       this.metrics.performance.totalResponseTime += responseTime;
-      this.metrics.performance.avgResponseTime = 
-        this.metrics.performance.totalResponseTime / 
+      this.metrics.performance.avgResponseTime =
+        this.metrics.performance.totalResponseTime /
         (this.metrics.requests.successful + this.metrics.requests.failed);
-      
+
       if (responseTime > this.metrics.performance.slowestRequest) {
         this.metrics.performance.slowestRequest = responseTime;
       }
@@ -356,8 +356,8 @@ class MetricsCollector {
         total: this.metrics.quotaUsage.total,
         byOperation: Object.fromEntries(this.metrics.quotaUsage.byOperation)
       },
-      cacheHitRate: this.metrics.requests.total > 0 
-        ? (this.metrics.requests.cached / this.metrics.requests.total) * 100 
+      cacheHitRate: this.metrics.requests.total > 0
+        ? (this.metrics.requests.cached / this.metrics.requests.total) * 100
         : 0,
       successRate: this.metrics.requests.total > 0
         ? ((this.metrics.requests.successful + this.metrics.requests.cached) / this.metrics.requests.total) * 100
@@ -368,11 +368,11 @@ class MetricsCollector {
   reset(): void {
     this.metrics = {
       requests: { total: 0, successful: 0, failed: 0, cached: 0 },
-      performance: { 
-        avgResponseTime: 0, 
-        totalResponseTime: 0, 
-        slowestRequest: 0, 
-        fastestRequest: Number.MAX_VALUE 
+      performance: {
+        avgResponseTime: 0,
+        totalResponseTime: 0,
+        slowestRequest: 0,
+        fastestRequest: Number.MAX_VALUE
       },
       errors: new Map<string, number>(),
       quotaUsage: { total: 0, byOperation: new Map<string, number>() }
@@ -386,7 +386,7 @@ const metricsCollector = new MetricsCollector();
 class ErrorHelper {
   static getActionableError(error: Error): Error {
     const message = error.message.toLowerCase();
-    
+
     if (message.includes('invalid api key') || message.includes('forbidden')) {
       return new Error(
         `API Key Error: ${error.message}\n` +
@@ -397,7 +397,7 @@ class ErrorHelper {
         `4. Visit: https://console.cloud.google.com/apis/credentials`
       );
     }
-    
+
     if (message.includes('quota') || message.includes('rate limit')) {
       return new Error(
         `Quota/Rate Limit Error: ${error.message}\n` +
@@ -408,7 +408,7 @@ class ErrorHelper {
         `4. Check quota usage at: https://console.cloud.google.com/apis/api/youtube.googleapis.com/quotas`
       );
     }
-    
+
     if (message.includes('network') || message.includes('fetch')) {
       return new Error(
         `Network Error: ${error.message}\n` +
@@ -419,7 +419,7 @@ class ErrorHelper {
         `4. The request will be automatically retried`
       );
     }
-    
+
     if (message.includes('timeout')) {
       return new Error(
         `Timeout Error: ${error.message}\n` +
@@ -429,7 +429,7 @@ class ErrorHelper {
         `3. Check YouTube API status: https://status.cloud.google.com/`
       );
     }
-    
+
     return error;
   }
 }
@@ -611,7 +611,7 @@ async function handleAnalyzeVideoIdea(args: AnalyzeVideoIdeaArgs): Promise<any> 
   const apiKey = args.youtubeApiKey || config.youtubeApiKey;
   const minViewCount = args.minViewCount || config.minViewCount;
   const maxResults = args.maxResults || config.maxResults;
-  
+
   // Comprehensive input validation
   try {
     InputValidator.validateVideoIdea(args.videoIdea);
@@ -627,7 +627,7 @@ async function handleAnalyzeVideoIdea(args: AnalyzeVideoIdeaArgs): Promise<any> 
     });
     throw error;
   }
-  
+
   // Check cache first
   const cacheKey = `analysis_${args.videoIdea}_${minViewCount}_${maxResults}`;
   const cachedResult = cache.get(cacheKey);
@@ -655,11 +655,11 @@ async function handleAnalyzeVideoIdea(args: AnalyzeVideoIdeaArgs): Promise<any> 
   }
 
   const startTime = Date.now();
-  
+
   try {
     // Generate semantic variations of the search term
     const searchTerms = generateSemanticVariations(args.videoIdea);
-    
+
     // Search for videos using multiple terms
     const allVideos: YouTubeVideo[] = [];
     let totalQuotaUsed = 0;
@@ -686,12 +686,12 @@ async function handleAnalyzeVideoIdea(args: AnalyzeVideoIdeaArgs): Promise<any> 
 
     // Cache the result
     cache.set(cacheKey, result, config.cacheTtl / 60000); // Convert ms to minutes
-    
+
     // Record metrics
     const responseTime = Date.now() - startTime;
     metricsCollector.recordRequest(true, responseTime);
     metricsCollector.recordQuotaUsage('analyze_video_idea', totalQuotaUsed);
-    
+
     // Record analysis for history tracking
     try {
       // Note: recordAnalysis would need to be imported from resources.js
@@ -733,7 +733,7 @@ async function handleAnalyzeVideoIdea(args: AnalyzeVideoIdeaArgs): Promise<any> 
         videoUrl: `https://youtube.com/watch?v=${video.videoId}`
       }))
     };
-    
+
     return {
       content: [
         {
@@ -746,7 +746,7 @@ async function handleAnalyzeVideoIdea(args: AnalyzeVideoIdeaArgs): Promise<any> 
     const responseTime = Date.now() - startTime;
     metricsCollector.recordRequest(false, responseTime);
     metricsCollector.recordError(error instanceof Error ? error.constructor.name : 'UnknownError');
-    
+
     logger.error('YouTube API error in handleAnalyzeVideoIdea', {
       error: error instanceof Error ? error.message : String(error),
       videoIdea: args.videoIdea,
@@ -754,7 +754,7 @@ async function handleAnalyzeVideoIdea(args: AnalyzeVideoIdeaArgs): Promise<any> 
       maxResults,
       responseTime: `${responseTime}ms`
     });
-    
+
     // Throw enhanced error with actionable suggestions
     throw ErrorHelper.getActionableError(error instanceof Error ? error : new Error(String(error)));
   }
@@ -764,7 +764,7 @@ interface GetQuotaStatusArgs {}
 
 async function handleGetQuotaStatus(args: GetQuotaStatusArgs): Promise<any> {
   const remaining = quotaManager.getRemainingQuota();
-  
+
   return {
     content: [
       {
@@ -796,12 +796,12 @@ async function handleExpandSearchTerms(args: ExpandSearchTermsArgs): Promise<any
   }
 
   const variations = generateSemanticVariations(args.videoIdea);
-  
+
   logger.info('Generated search term variations', {
     originalIdea: args.videoIdea,
     variationCount: variations.length
   });
-  
+
   return {
     content: [
       {
@@ -825,7 +825,7 @@ async function handleGetPerformanceMetrics(args: GetPerformanceMetricsArgs): Pro
     remainingQuota: quotaManager.getRemainingQuota(),
     usedQuota: 10000 - quotaManager.getRemainingQuota()
   };
-  
+
   const systemMetrics = {
     uptime: process.uptime(),
     memoryUsage: process.memoryUsage(),
@@ -835,9 +835,9 @@ async function handleGetPerformanceMetrics(args: GetPerformanceMetricsArgs): Pro
       resetTime: rateLimiter.getResetTime()
     }
   };
-  
+
   logger.info('Retrieved performance metrics');
-  
+
   return {
     content: [
       {
@@ -869,13 +869,13 @@ async function handleGetPerformanceMetrics(args: GetPerformanceMetricsArgs): Pro
  */
 function generateSemanticVariations(videoIdea: string): string[] {
   const variations: string[] = [videoIdea];
-  
+
   // Use compromise for NLP processing
   const doc = nlp(videoIdea);
   const nouns = doc.nouns().out('array');
   const verbs = doc.verbs().out('array');
   const adjectives = doc.adjectives().out('array');
-  
+
   // Generate variations using synonyms and related terms
   const synonymMap: { [key: string]: string[] } = {
     'automation': ['automated', 'automatic', 'ai', 'bot', 'script', 'workflow'],
@@ -889,7 +889,7 @@ function generateSemanticVariations(videoIdea: string): string[] {
     'fitness': ['workout', 'exercise', 'health', 'gym', 'training'],
     'cooking': ['recipe', 'food', 'kitchen', 'meal', 'chef']
   };
-  
+
   // Add direct synonyms
   Object.keys(synonymMap).forEach(key => {
     if (videoIdea.toLowerCase().includes(key)) {
@@ -898,7 +898,7 @@ function generateSemanticVariations(videoIdea: string): string[] {
       });
     }
   });
-  
+
   // Add broader related terms
   const broaderTerms = [
     `${videoIdea} tips`,
@@ -912,9 +912,9 @@ function generateSemanticVariations(videoIdea: string): string[] {
     `${videoIdea} technique`,
     `${videoIdea} system`
   ];
-  
+
   variations.push(...broaderTerms);
-  
+
   // Remove duplicates and return top 10
   return [...new Set(variations)].slice(0, 10);
 }
@@ -932,14 +932,14 @@ async function searchYouTubeVideos(searchTerm: string, apiKey: string, minViewCo
     const resetTime = rateLimiter.getResetTime();
     throw new Error(`Rate limit exceeded. Reset at: ${resetTime.toISOString()}`);
   }
-  
+
   // Sanitize search term
   const sanitizedTerm = InputValidator.sanitizeSearchTerm(searchTerm);
-  
+
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const publishedAfter = thirtyDaysAgo.toISOString();
-  
+
   // Check cache first
   const cacheKey = `search_${sanitizedTerm}_${minViewCount}`;
   const cachedResult = cache.get(cacheKey);
@@ -947,20 +947,20 @@ async function searchYouTubeVideos(searchTerm: string, apiKey: string, minViewCo
     logger.info('Returning cached search result', { searchTerm: sanitizedTerm });
     return cachedResult;
   }
-  
+
   // Execute with circuit breaker and retry logic
   return await circuitBreaker.execute(async () => {
     return await retryHandler.execute(async () => {
       // Search for videos (costs 100 quota units)
       const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(sanitizedTerm)}&type=video&order=viewCount&publishedAfter=${publishedAfter}&maxResults=25&key=${apiKey}`;
-      
+
       logger.info('Making YouTube API search request', {
         searchTerm: sanitizedTerm,
         publishedAfter,
         minViewCount,
         circuitBreakerState: circuitBreaker.getState()
       });
-      
+
       const searchResponse = await fetch(searchUrl, {
         signal: AbortSignal.timeout(30000), // 30 second timeout
         headers: {
@@ -976,13 +976,13 @@ async function searchYouTubeVideos(searchTerm: string, apiKey: string, minViewCo
     });
     throw new Error(`YouTube API search failed: ${searchResponse.statusText}`);
   }
-  
+
   const searchData = await searchResponse.json() as any;
   const videoIds = searchData.items.map((item: any) => item.id.videoId).join(',');
-  
+
   // Get video details including statistics (costs 1 quota unit)
   const detailsUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=${videoIds}&key=${apiKey}`;
-  
+
   const detailsResponse = await fetch(detailsUrl);
   if (!detailsResponse.ok) {
     logger.error('YouTube API details failed', {
@@ -992,9 +992,9 @@ async function searchYouTubeVideos(searchTerm: string, apiKey: string, minViewCo
     });
     throw new Error(`YouTube API details failed: ${detailsResponse.statusText}`);
   }
-  
+
   const detailsData = await detailsResponse.json() as any;
-  
+
   const videos: YouTubeVideo[] = detailsData.items
     .filter((item: any) => parseInt(item.statistics.viewCount) >= minViewCount)
     .map((item: any) => {
@@ -1002,15 +1002,15 @@ async function searchYouTubeVideos(searchTerm: string, apiKey: string, minViewCo
       const likeCount = parseInt(item.statistics.likeCount || '0');
       const commentCount = parseInt(item.statistics.commentCount || '0');
       const publishedAt = item.snippet.publishedAt;
-      
+
       // Calculate engagement rate
       const engagementRate = viewCount > 0 ? ((likeCount + commentCount) / viewCount) * 100 : 0;
-      
+
       // Calculate views per day
       const publishDate = new Date(publishedAt);
       const daysSincePublish = Math.max(1, Math.floor((Date.now() - publishDate.getTime()) / (1000 * 60 * 60 * 24)));
       const viewsPerDay = Math.floor(viewCount / daysSincePublish);
-      
+
       return {
         title: item.snippet.title,
         videoId: item.id,
@@ -1025,18 +1025,18 @@ async function searchYouTubeVideos(searchTerm: string, apiKey: string, minViewCo
         viewsPerDay
       };
     });
-  
+
   const result = { videos, quotaUsed: 101 }; // 100 for search + 1 for details
-  
+
   // Cache the search result
   cache.set(cacheKey, result, config.cacheTtl / 60000); // Convert ms to minutes
-  
+
   logger.info('YouTube API search completed', {
     searchTerm: sanitizedTerm,
     videoCount: videos.length,
     quotaUsed: 101
   });
-  
+
   return result;
     }, `searchYouTubeVideos-${searchTerm}`);
   });

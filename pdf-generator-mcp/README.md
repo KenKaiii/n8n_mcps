@@ -64,7 +64,7 @@ Add the following to your n8n configuration:
 ## Environment Variables
 
 - `GITHUB_TOKEN`: GitHub personal access token for publishing PDFs
-- `GITHUB_OWNER`: GitHub username or organization (default: "KenKaiii")
+- `GITHUB_OWNER`: GitHub username or organization (default: "your-github-username")
 - `GITHUB_REPO`: Repository name for PDFs (default: "mcp_docs")
 - `GITHUB_BRANCH`: Branch to publish to (default: "main")
 - `PDF_BASE_PATH`: Base path in repository (default: "pdfs")

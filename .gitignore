@@ -60,3 +60,7 @@ youtube-mcp/coverage/
 /Dockerfile
 /railway.json
 deploy-railway.sh
+
+# Claude and development tools
+.claude/
+.production-scanner/

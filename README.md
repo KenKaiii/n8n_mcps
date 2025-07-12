@@ -47,12 +47,20 @@ Create beautiful PDFs from any content
 
 ## 🚀 Quick Start
 
-### **Get the Code**
-```bash
-git clone https://github.com/kenkaiii/n8n_mcps.git
-cd n8n_mcps
-code .
-```
+### **Get Your Own Copy**
+
+**🎯 Use this as a template repository:**
+
+1. **Click the green "Use this template" button** at the top of this GitHub page
+2. **Create your own repository** from this template
+3. **Clone YOUR new repository:**
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
+   cd YOUR_REPO_NAME
+   code .
+   ```
+
+*This gives you a clean copy with your own git history - perfect for pushing to Railway!*
 
 ### **For n8n Users**
 

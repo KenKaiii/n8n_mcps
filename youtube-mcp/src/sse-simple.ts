@@ -14,8 +14,26 @@ app.use(express.json());
 // SSE connections
 const sseConnections = new Map();
 
+// Authentication middleware
+const authMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.replace('Bearer ', '');
+
+  if (!token || token !== process.env.MCP_AUTH_TOKEN) {
+    return res.status(401).json({
+      jsonrpc: '2.0',
+      error: {
+        code: -32001,
+        message: 'Unauthorized: Invalid or missing MCP auth token'
+      },
+      id: null
+    });
+  }
+  next();
+};
+
 // SSE endpoint
-app.get('/sse', (req, res) => {
+app.get('/sse', authMiddleware, (req, res) => {
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
@@ -119,7 +137,7 @@ const validateJsonRpcRequest = (req: express.Request, res: express.Response, nex
 };
 
 // Message endpoint - proxy to stdio MCP server
-app.post('/messages', validateJsonRpcRequest, async (req, res) => {
+app.post('/messages', authMiddleware, validateJsonRpcRequest, async (req, res) => {
   try {
     const { jsonrpc, method, params, id } = req.body;
 
@@ -260,10 +278,10 @@ app.post('/messages', validateJsonRpcRequest, async (req, res) => {
 });
 
 // CORS
-app.use((req, res, next) => {
+app.use((_req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   next();
 });
 

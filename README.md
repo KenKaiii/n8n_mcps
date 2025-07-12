@@ -92,12 +92,22 @@ Don't worry - these are all free to get:
 
 ### For YouTube MCP:
 - 🔑 **YouTube API Key** (free from Google Cloud Console)
-- 🎫 **MCP Auth Token** (we'll help you generate this)
+- 🎫 **MCP Auth Token** (see below)
 
 ### For Web Scraper & PDF Generator:
 - 🐙 **GitHub Account** (for storing your scraped content/PDFs)
 - 🔑 **GitHub Personal Access Token** (free to create)
-- 🎫 **MCP Auth Token** (we'll help you generate this)
+- 🎫 **MCP Auth Token** (see below)
+
+### 🔐 Getting Your MCP Auth Token
+
+The easiest way to get a secure MCP auth token:
+
+1. **Ask Claude**: "Generate a secure 32-byte base64 token for MCP authentication"
+2. **Claude will generate** something like: `Ab3dEf9hIjKlMnOpQrStUvWxYz12345678901234567890`
+3. **Use this as your `MCP_AUTH_TOKEN`** in Railway environment variables
+
+**What is this token for?** It authenticates your n8n instance with your MCP servers, ensuring only your workflows can access your deployed MCPs.
 
 *Don't know how to get these? No problem! Each project folder has detailed setup instructions.*
 

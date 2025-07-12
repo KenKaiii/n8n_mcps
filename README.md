@@ -104,12 +104,18 @@ Don't worry - these are all free to get:
 The easiest way to get a secure MCP auth token:
 
 1. **Ask Claude**: "Generate a secure 32-byte base64 token for MCP authentication"
-2. **Claude will generate** something like: `Ab3dEf9hIjKlMnOpQrStUvWxYz12345678901234567890`
+2. **Claude will generate** something like: `x5PY2SD2zeKSFfLuDyuHB40+K0+SaqBOt0G+DHowVJs=`
 3. **Use this as your `MCP_AUTH_TOKEN`** in Railway environment variables
 
 **What is this token for?** It authenticates your n8n instance with your MCP servers using Bearer token authentication. All endpoints require this token - **no token = no access**.
 
-**Security:** Without the correct token, requests return `401 Unauthorized`. This ensures only your n8n workflows can access your deployed MCPs.
+**Security Architecture:**
+- **NGINX Proxy Layer**: All MCPs use NGINX as an authentication proxy on port 8080
+- **Supergateway Backend**: MCP protocol implementation runs on port 8081 (internal)
+- **Bearer Token Validation**: NGINX validates `Authorization: Bearer <token>` headers
+- **Zero Trust**: Without the correct token, requests return `401 Unauthorized`
+
+This dual-layer architecture ensures both security and n8n compatibility.
 
 *Don't know how to get these? No problem! Each project folder has detailed setup instructions.*
 

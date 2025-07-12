@@ -13,18 +13,25 @@ This guide covers deploying your MCP server to Railway with Supergateway for HTT
 
 ```
 Railway Container
-    ├── Node.js Application
-    ├── Supergateway (HTTP → STDIO converter)
-    └── Your MCP Server (STDIO)
+    ├── NGINX Proxy (Port 8080) - Authentication Layer
+    ├── Supergateway (Port 8081) - MCP Protocol Layer
+    └── Your MCP Server (STDIO) - Business Logic
 
-External Request → Railway URL → Supergateway (Auth Check) → MCP Server
+External Request → Railway URL → NGINX (Bearer Auth) → Supergateway → MCP Server
+                                     ↓
+                              401 if invalid token
 ```
+
+**Security Benefits:**
+- NGINX validates Bearer tokens before reaching application
+- Supergateway provides MCP protocol compatibility
+- Zero-trust architecture with proper error responses
 
 ## Phase 1: Prepare for Deployment
 
 ### 1.1 Create Dockerfile
 
-Create a multi-stage Dockerfile in your project root:
+Create a multi-stage Dockerfile with NGINX authentication:
 
 ```dockerfile
 FROM node:20-slim AS builder
@@ -58,28 +65,28 @@ RUN npm ci --only=production
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
 
-# Create .env file from environment
-RUN touch .env
+# Install nginx, gettext-base for envsubst, and supergateway
+RUN apt-get update && apt-get install -y \
+    nginx \
+    gettext-base \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install supergateway globally (only if using Supergateway method)
 RUN npm install -g supergateway
 
-# Expose port for health checks
+# Copy nginx configuration and start script
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
+# Expose port for Railway
 EXPOSE 8080
 
 # Set environment variables
 ENV NODE_ENV=production
+ENV MCP_AUTH_TOKEN=${MCP_AUTH_TOKEN}
 
-# CRITICAL: Validate required environment variables
-RUN if [ -z "$MCP_AUTH_TOKEN" ]; then echo "ERROR: MCP_AUTH_TOKEN is required but not set" && exit 1; fi
-
-# CHOOSE ONE - Supergateway (Option A) OR SSE Server (Option B)
-
-# Option A: Use Supergateway (simple HTTP)
-# CMD ["sh", "-c", "supergateway --port ${PORT:-8080} --oauth2Bearer \"${MCP_AUTH_TOKEN}\" --stdio 'node dist/index.js 2>&1'"]
-
-# Option B: Use SSE Server (recommended for n8n)
-CMD ["node", "dist/sse-simple.js"]
+# Start nginx proxy + supergateway
+CMD ["/start.sh"]
 ```
 
 ### 1.2 Create railway.json

@@ -36,7 +36,7 @@ In the MCP Client node:
 
 1. **SSE Endpoint URL:** `https://your-app.railway.app/sse`
    - Replace `your-app` with your actual Railway app name
-   
+
 2. **Bearer Token:** Your MCP authentication token
    - This is the `MCP_AUTH_TOKEN` you set in Railway
 
@@ -71,7 +71,7 @@ Once connected, you can call your MCP tools:
 - Verify the SSE endpoint URL is correct
 - Test the endpoint: `curl -N https://your-app.railway.app/sse`
 
-### "401 Unauthorized" 
+### "401 Unauthorized"
 - Make sure the Bearer Token matches your `MCP_AUTH_TOKEN` in Railway
 - Check for extra spaces in the token
 
@@ -84,11 +84,12 @@ Once connected, you can call your MCP tools:
 Use cURL to test outside n8n:
 
 ```bash
-# Test the SSE endpoint
-curl -N https://your-app.railway.app/sse
+# Test the SSE endpoint with authentication
+curl -N https://your-app.railway.app/sse \
+  -H "Authorization: Bearer YOUR_TOKEN"
 
 # Test tool execution
-curl -X POST https://your-app.railway.app/messages \
+curl -X POST https://your-app.railway.app/message?sessionId=SESSION_ID \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -98,6 +99,8 @@ curl -X POST https://your-app.railway.app/messages \
     "id": 1
   }'
 ```
+
+**Note:** Replace `YOUR_TOKEN` with your actual MCP_AUTH_TOKEN and `SESSION_ID` with the session ID from the SSE response.
 
 ## Next Steps
 

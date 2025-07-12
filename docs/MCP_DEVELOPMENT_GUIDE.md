@@ -12,18 +12,24 @@ This guide provides step-by-step instructions for building an MCP (Model Context
 
 ## Architecture Overview
 
-Our MCP architecture consists of three key components:
+Our MCP architecture uses a secure two-layer design optimized for n8n integration:
 
-1. **MCP Server (STDIO)** - The core MCP implementation that handles tools, resources, and prompts
-2. **Supergateway** - Converts STDIO to HTTP with authentication
-3. **SSE Server** - Optional Server-Sent Events endpoint for n8n integration
+1. **NGINX Proxy Layer (Port 8080)** - Authentication proxy with Bearer token validation
+2. **Supergateway Layer (Port 8081)** - MCP protocol implementation (internal)
+3. **MCP Server (STDIO)** - Core MCP implementation that handles tools, resources, and prompts
 
 ```
-n8n → HTTP Request → Supergateway → STDIO → MCP Server
-                          ↓
-                    Authentication
-                    (Bearer Token)
+n8n → NGINX Proxy (8080) → Supergateway (8081) → STDIO → MCP Server
+           ↓
+    Bearer Token Auth
+    (401 if invalid)
 ```
+
+**Why This Architecture?**
+- **Security**: NGINX validates Bearer tokens before reaching application layer
+- **n8n Compatibility**: Supergateway provides proper MCP protocol support
+- **Reliability**: Proven proxy layer handles auth, routing, and error responses
+- **Scalability**: NGINX can handle high concurrent connections efficiently
 
 ## Project Structure
 
@@ -37,9 +43,10 @@ your-mcp-server/
 │   ├── resources.ts      # Resource implementations (optional)
 │   ├── prompts.ts        # Prompt implementations (optional)
 │   ├── types.ts          # TypeScript type definitions
-│   ├── config.ts         # Configuration management
-│   └── sse-simple.ts     # SSE server (optional, for n8n)
+│   └── config.ts         # Configuration management
 ├── dist/                 # Compiled JavaScript (generated)
+├── nginx.conf            # NGINX authentication proxy config
+├── start.sh              # Container startup script
 ├── package.json
 ├── tsconfig.json
 ├── Dockerfile
@@ -458,176 +465,204 @@ main().catch((error) => {
 });
 ```
 
-## Phase 3: Choose Your Deployment Architecture
+## Phase 3: NGINX Authentication Setup
 
-### Decision Matrix: SSE vs Direct HTTP
+The recommended architecture uses NGINX as an authentication proxy with Supergateway for MCP protocol support.
 
-| Use Case | Recommendation | Deployment Method | Reason |
-|----------|---------------|-------------------|---------|
-| **n8n integration** | SSE Server | `CMD ["node", "dist/sse-simple.js"]` | Better n8n compatibility, handles auth properly |
-| **Simple API calls** | Direct HTTP | `CMD ["supergateway", "..."]` | Simpler deployment |
-| **Real-time streaming** | SSE Server | `CMD ["node", "dist/sse-simple.js"]` | Required for streaming |
-| **High concurrency** | SSE Server | `CMD ["node", "dist/sse-simple.js"]` | Better process management |
-| **CLI tools only** | Direct HTTP | `CMD ["supergateway", "..."]` | No extra complexity needed |
+### 3.1 Create nginx.conf
 
-### 3.1 Option A: Direct HTTP (Supergateway Only)
+```nginx
+events {
+    worker_connections 1024;
+}
 
-**Use this when:**
-- Simple request/response operations
-- No n8n integration needed
-- CLI tools or simple API access
+http {
+    server {
+        listen 8080;
 
-**Deployment:** Use Supergateway in Dockerfile:
-```dockerfile
-RUN npm install -g supergateway
-CMD ["sh", "-c", "supergateway --port ${PORT:-8080} --oauth2Bearer \"${MCP_AUTH_TOKEN}\" --stdio 'node dist/index.js 2>&1'"]
-```
-
-### 3.2 Option B: SSE Server (Recommended for n8n)
-
-**Use this when:**
-- n8n integration required
-- Need better authentication control
-- Want process pooling/optimization
-
-**Deployment:** Use SSE server in Dockerfile:
-```dockerfile
-CMD ["node", "dist/sse-simple.js"]
-```
-
-## Phase 4: SSE Server Implementation (Option B)
-
-If you chose SSE server for n8n integration, create:
-
-### 3.1 Create src/sse-simple.ts
-
-```typescript
-#!/usr/bin/env node
-import express from 'express';
-import { spawn } from 'child_process';
-import { config } from './config.js';
-
-const app = express();
-app.use(express.json());
-
-// SSE endpoint
-app.get('/sse', (req, res) => {
-  res.writeHead(200, {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive',
-    'Access-Control-Allow-Origin': '*'
-  });
-
-  const messageUrl = `${req.protocol}://${req.get('host')}/messages`;
-  res.write(`event: endpoint\ndata: ${messageUrl}\n\n`);
-
-  const pingInterval = setInterval(() => {
-    res.write(`event: ping\ndata: ${Date.now()}\n\n`);
-  }, 30000);
-
-  req.on('close', () => {
-    clearInterval(pingInterval);
-  });
-});
-
-// Message endpoint - proxy to stdio MCP server
-app.post('/messages', async (req, res) => {
-  try {
-    const { jsonrpc, method, params, id } = req.body;
-
-    // Spawn the stdio server
-    const child = spawn('node', ['dist/index.js'], {
-      stdio: ['pipe', 'pipe', 'pipe']
-    });
-
-    let responseData = '';
-    let errorData = '';
-
-    child.stdout.on('data', (data) => {
-      responseData += data.toString();
-    });
-
-    child.stderr.on('data', (data) => {
-      errorData += data.toString();
-    });
-
-    child.on('close', () => {
-      try {
-        const lines = responseData.split('\n').filter(line => line.trim());
-        let response;
-
-        for (const line of lines) {
-          try {
-            const parsed = JSON.parse(line);
-            if (parsed.id === id) {
-              response = parsed;
-              break;
+        location / {
+            # Simple Bearer token validation using if statement
+            set $auth_ok 0;
+            if ($http_authorization = "Bearer ${MCP_AUTH_TOKEN}") {
+                set $auth_ok 1;
             }
-          } catch (e) {
-            // Skip non-JSON lines
-          }
+            if ($auth_ok = 0) {
+                add_header Content-Type application/json always;
+                return 401 '{"error":"Unauthorized: Invalid or missing Bearer token"}';
+            }
+
+            proxy_pass http://localhost:8081;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection 'upgrade';
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_cache_bypass $http_upgrade;
+
+            # SSE specific settings
+            proxy_buffering off;
+            proxy_cache off;
+            proxy_set_header Cache-Control no-cache;
         }
-
-        if (response) {
-          res.json(response);
-        } else {
-          res.json({
-            jsonrpc: '2.0',
-            error: {
-              code: -32603,
-              message: 'No response from MCP server'
-            },
-            id
-          });
-        }
-      } catch (error: any) {
-        res.json({
-          jsonrpc: '2.0',
-          error: {
-            code: -32603,
-            message: error.message || 'Internal error'
-          },
-          id
-        });
-      }
-    });
-
-    // Send request to stdio server
-    const request = JSON.stringify({ jsonrpc, method, params, id });
-    child.stdin.write(request + '\n');
-    child.stdin.end();
-
-  } catch (error: any) {
-    res.json({
-      jsonrpc: '2.0',
-      error: {
-        code: -32603,
-        message: error.message
-      },
-      id: req.body.id
-    });
-  }
-});
-
-// CORS
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
-  next();
-});
-
-const PORT = config.port;
-app.listen(PORT, () => {
-  console.log(`SSE MCP Server running on port ${PORT}`);
-  console.log(`SSE endpoint: http://localhost:${PORT}/sse`);
-});
+    }
+}
 ```
 
-## Phase 4: Testing
+### 3.2 Create start.sh
 
-### 4.1 Local Testing
+```bash
+#!/bin/bash
+
+# Substitute environment variable in nginx config
+envsubst '${MCP_AUTH_TOKEN}' < /etc/nginx/nginx.conf > /tmp/nginx.conf
+mv /tmp/nginx.conf /etc/nginx/nginx.conf
+
+# Start nginx in background
+nginx -g "daemon off;" &
+
+# Start supergateway on port 8081 (nginx proxies from 8080 to 8081)
+supergateway --port 8081 --stdio 'node dist/index.js 2>&1'
+```
+
+Make it executable:
+```bash
+chmod +x start.sh
+```
+
+### 3.3 Create Dockerfile
+
+```dockerfile
+FROM node:20-slim AS builder
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install all dependencies (including dev dependencies for building)
+RUN npm ci
+
+# Copy source files
+COPY tsconfig.json ./
+COPY src ./src
+
+# Build the TypeScript project
+RUN npm run build
+
+# Production stage
+FROM node:20-slim
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Copy built files from builder stage
+COPY --from=builder /app/dist ./dist
+
+# Install nginx, gettext-base for envsubst, and supergateway
+RUN apt-get update && apt-get install -y \
+    nginx \
+    gettext-base \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN npm install -g supergateway
+
+# Copy nginx configuration and start script
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
+# Expose port - Railway will override this
+EXPOSE 8080
+
+# Set MCP_AUTH_TOKEN from environment
+ENV MCP_AUTH_TOKEN=${MCP_AUTH_TOKEN}
+
+# Start nginx proxy + supergateway
+CMD ["/start.sh"]
+```
+
+## Phase 4: Authentication Testing
+
+You can test the authentication system locally before deployment:
+
+### 4.1 Local Testing Script
+
+Create a test script to verify your authentication setup:
+
+```bash
+#!/bin/bash
+
+# Set your test token
+export MCP_AUTH_TOKEN="test-token-$(date +%s)"
+echo "Using token: $MCP_AUTH_TOKEN"
+
+# Build the project
+npm run build
+
+# Test nginx config substitution
+envsubst '${MCP_AUTH_TOKEN}' < nginx.conf > /tmp/test-nginx.conf
+
+# Start nginx
+nginx -c "/tmp/test-nginx.conf" -p /tmp/
+
+# Start supergateway in background
+supergateway --port 8081 --stdio 'node dist/index.js 2>&1' &
+GATEWAY_PID=$!
+
+sleep 3
+
+echo "Testing authentication..."
+
+# Test no auth (should get 401)
+echo "No auth test:"
+curl -s -X GET "http://localhost:8080/sse" | head -1
+
+# Test wrong auth (should get 401)
+echo "Wrong auth test:"
+curl -s -X GET "http://localhost:8080/sse" -H "Authorization: Bearer wrong-token" | head -1
+
+# Test correct auth (should get SSE stream)
+echo "Correct auth test:"
+curl -s -X GET "http://localhost:8080/sse" -H "Authorization: Bearer $MCP_AUTH_TOKEN" --max-time 2 | head -1
+
+# Cleanup
+kill $GATEWAY_PID 2>/dev/null || true
+nginx -s stop 2>/dev/null || true
+
+echo "✅ Authentication test complete"
+```
+
+### 4.2 Expected Results
+
+**Successful authentication test should show:**
+- No auth: `{"error":"Unauthorized: Invalid or missing Bearer token"}`
+- Wrong auth: `{"error":"Unauthorized: Invalid or missing Bearer token"}`
+- Correct auth: `event: endpoint` (SSE stream starts)
+
+### 4.3 Docker Testing
+
+Test the complete Docker setup:
+
+```bash
+# Build image
+docker build -t your-mcp-server .
+
+# Run with auth token
+docker run -p 8080:8080 -e MCP_AUTH_TOKEN="your-test-token" your-mcp-server
+
+# Test from another terminal
+curl -X GET "http://localhost:8080/sse" \
+  -H "Authorization: Bearer your-test-token"
+```
+
+## Phase 5: Development Testing
+
+### 5.1 STDIO Server Testing
 
 1. Install dependencies:
    ```bash
@@ -648,20 +683,27 @@ app.listen(PORT, () => {
    npx @modelcontextprotocol/inspector npm run dev
    ```
 
-4. Test SSE server (if implemented):
-   ```bash
-   npm run dev:sse
-   ```
-   Visit http://localhost:8080/sse in browser
+### 5.2 Full Stack Testing
 
-### 4.2 Build and Test Production
+Test the complete NGINX + Supergateway setup:
 
 ```bash
 npm run build
-npm start
+export MCP_AUTH_TOKEN="your-test-token"
+bash start.sh
 ```
 
-## Phase 5: Implementation Checklist
+Then test authentication in another terminal:
+```bash
+# Should fail
+curl -X GET "http://localhost:8080/sse"
+
+# Should work
+curl -X GET "http://localhost:8080/sse" \
+  -H "Authorization: Bearer your-test-token"
+```
+
+## Phase 6: Implementation Checklist
 
 Before deployment, ensure:
 
@@ -671,35 +713,50 @@ Before deployment, ensure:
 - [ ] Environment variables documented in .env.example
 - [ ] TypeScript compilation successful (`npm run typecheck`)
 - [ ] No hardcoded secrets or API keys
+- [ ] NGINX config created with authentication
+- [ ] start.sh script created and executable
+- [ ] Dockerfile includes NGINX and supergateway
+- [ ] Authentication testing passes all scenarios
 - [ ] README.md with clear usage instructions
 - [ ] All console.log replaced with console.error (for STDIO compatibility)
 
 ## Best Practices
 
-1. **Error Handling**
+1. **Security Architecture**
+   - Use NGINX proxy for authentication (never skip this layer)
+   - Generate strong 32+ character Bearer tokens
+   - Validate tokens before reaching application layer
+   - Use HTTPS in production (Railway handles this automatically)
+
+2. **Error Handling**
    - Always wrap async operations in try-catch
    - Return structured error responses
    - Log errors to console.error (not console.log)
+   - Handle authentication failures gracefully
 
-2. **Input Validation**
+3. **Input Validation**
    - Use Zod schemas for all tool inputs
    - Validate types and required fields
    - Provide clear error messages
+   - Sanitize all user inputs
 
-3. **Security**
-   - Never hardcode sensitive data
-   - Use environment variables for all configuration
-   - Validate and sanitize all inputs
+4. **Authentication**
+   - Never hardcode tokens in code
+   - Use environment variables for MCP_AUTH_TOKEN
+   - Test all authentication scenarios (no token, wrong token, correct token)
+   - Return proper 401 responses for unauthorized requests
 
-4. **Performance**
+5. **Performance**
    - Implement timeouts for external API calls
    - Use connection pooling for databases
    - Cache frequently accessed data
+   - NGINX handles connection management efficiently
 
-5. **STDIO Compatibility**
+6. **STDIO Compatibility**
    - Use console.error for logging (console.log is for MCP output)
    - Ensure clean JSON output on stdout
    - Handle process termination gracefully
+   - Test STDIO server independently before integration
 
 ## Next Steps
 

@@ -60,6 +60,18 @@ The goal is to help content creators find proven, successful title and thumbnail
 
 - Node.js 16 or higher
 - npm or yarn
+- YouTube Data API v3 key
+- MCP Auth Token
+
+### Environment Variables
+
+Create a `.env` file with:
+
+```bash
+YOUTUBE_API_KEY=your-youtube-api-key
+MCP_AUTH_TOKEN=your-secure-mcp-auth-token
+PORT=8080
+```
 
 ### Setup
 
@@ -76,30 +88,36 @@ The goal is to help content creators find proven, successful title and thumbnail
 
 ## Usage
 
-### Development Mode
+### Production SSE Server (Railway/Docker)
 
-Run the server in development mode with auto-reload:
+The server runs as an authenticated SSE server:
+
+```bash
+node dist/sse-server.js
+```
+
+**Endpoints:**
+- `GET /sse` - SSE endpoint for n8n (requires Bearer token)
+- `POST /messages` - JSON-RPC messages (requires Bearer token)
+
+**Authentication:**
+All endpoints require `Authorization: Bearer YOUR_MCP_AUTH_TOKEN` header.
+
+### Development Mode (Local Testing)
+
+Run the stdio server for local development:
 
 ```bash
 npm run dev
-```
-
-### Production Mode
-
-Build and run the compiled server:
-
-```bash
-npm run build
+# or
 node dist/index.js
 ```
 
-### Adding to Claude Code
+### Adding to n8n
 
-Add this server to Claude Code by running:
-
-```bash
-claude mcp add youtube-analyzer-mcp -s user -- node /absolute/path/to/dist/index.js
-```
+Connect to your deployed MCP server using:
+- **SSE URL**: `https://your-railway-app.railway.app/sse`
+- **Bearer Token**: Your `MCP_AUTH_TOKEN`
 
 ## API Reference
 

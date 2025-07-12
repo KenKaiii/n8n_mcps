@@ -107,7 +107,9 @@ The easiest way to get a secure MCP auth token:
 2. **Claude will generate** something like: `Ab3dEf9hIjKlMnOpQrStUvWxYz12345678901234567890`
 3. **Use this as your `MCP_AUTH_TOKEN`** in Railway environment variables
 
-**What is this token for?** It authenticates your n8n instance with your MCP servers, ensuring only your workflows can access your deployed MCPs.
+**What is this token for?** It authenticates your n8n instance with your MCP servers using Bearer token authentication. All endpoints require this token - **no token = no access**.
+
+**Security:** Without the correct token, requests return `401 Unauthorized`. This ensures only your n8n workflows can access your deployed MCPs.
 
 *Don't know how to get these? No problem! Each project folder has detailed setup instructions.*
 

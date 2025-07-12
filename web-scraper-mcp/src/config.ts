@@ -9,13 +9,12 @@ export interface GitHubConfig {
   branch?: string;
 }
 
-// Default GitHub configuration
+// Default GitHub configuration from environment variables
 export const GITHUB_CONFIG: GitHubConfig = {
-  owner: 'KenKaiii',
-  repo: 'mcp_docs',
-  token:
-    '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', // Temporary for testing
-  branch: 'main',
+  owner: process.env.GITHUB_OWNER || '',
+  repo: process.env.GITHUB_REPO || '',
+  token: process.env.GITHUB_TOKEN || '',
+  branch: process.env.GITHUB_BRANCH || 'main',
 };
 
 // Global crawler configuration

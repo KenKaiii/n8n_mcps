@@ -30,8 +30,18 @@ COPY --from=builder /app/dist ./dist
 # Create .env file from environment
 RUN touch .env
 
-# Install supergateway globally
+# Install nginx, gettext-base for envsubst, and supergateway
+RUN apt-get update && apt-get install -y \
+    nginx \
+    gettext-base \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN npm install -g supergateway
+
+# Copy nginx configuration and start script
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
 
 EXPOSE 8080
 
@@ -40,5 +50,5 @@ ENV NODE_ENV=production
 ENV YOUTUBE_API_KEY=${YOUTUBE_API_KEY}
 ENV MCP_AUTH_TOKEN=${MCP_AUTH_TOKEN}
 
-# Start with supergateway - use Bearer token auth properly
-CMD ["sh", "-c", "supergateway --port ${PORT:-8080} --oauth2Bearer \"${MCP_AUTH_TOKEN}\" --stdio 'node dist/index.js 2>&1'"]
+# Start nginx proxy + supergateway
+CMD ["/start.sh"]

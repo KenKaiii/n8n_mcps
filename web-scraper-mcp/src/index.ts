@@ -77,7 +77,7 @@ try {
 } catch (error) {
   logger.error('Failed to setup resources', {
     error: error instanceof Error ? error.message : String(error),
-    stack: error instanceof Error ? error.stack : undefined
+    stack: error instanceof Error ? error.stack : undefined,
   });
   throw error;
 }
@@ -88,7 +88,7 @@ try {
 } catch (error) {
   logger.error('Failed to setup prompts', {
     error: error instanceof Error ? error.message : String(error),
-    stack: error instanceof Error ? error.stack : undefined
+    stack: error instanceof Error ? error.stack : undefined,
   });
   throw error;
 }
@@ -111,7 +111,7 @@ async function main(): Promise<void> {
     logger.info('Web Scraper MCP server started successfully', {
       serverName: 'web-scraper-mcp',
       version: '1.0.0',
-      capabilities: ['tools', 'resources', 'prompts']
+      capabilities: ['tools', 'resources', 'prompts'],
     });
   } catch (error) {
     logger.error('Failed to start Web Scraper MCP server', {

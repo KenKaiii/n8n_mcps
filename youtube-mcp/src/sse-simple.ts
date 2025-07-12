@@ -39,14 +39,89 @@ app.get('/sse', (req, res) => {
   });
 });
 
+// Input validation middleware
+const validateJsonRpcRequest = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const { jsonrpc, method, params, id } = req.body;
+
+  // Validate required fields
+  if (!jsonrpc || !method || id === undefined) {
+    return res.status(400).json({
+      jsonrpc: '2.0',
+      error: {
+        code: -32600,
+        message: 'Invalid Request: Missing required fields'
+      },
+      id: null
+    });
+  }
+
+  // Validate JSON-RPC version
+  if (jsonrpc !== '2.0') {
+    return res.status(400).json({
+      jsonrpc: '2.0',
+      error: {
+        code: -32600,
+        message: 'Invalid Request: JSON-RPC version must be 2.0'
+      },
+      id: id
+    });
+  }
+
+  // Validate method is a string
+  if (typeof method !== 'string' || method.length === 0) {
+    return res.status(400).json({
+      jsonrpc: '2.0',
+      error: {
+        code: -32600,
+        message: 'Invalid Request: Method must be a non-empty string'
+      },
+      id: id
+    });
+  }
+
+  // Validate method format (should contain only alphanumeric, slash, underscore)
+  if (!/^[a-zA-Z0-9_\/]+$/.test(method)) {
+    return res.status(400).json({
+      jsonrpc: '2.0',
+      error: {
+        code: -32600,
+        message: 'Invalid Request: Method contains invalid characters'
+      },
+      id: id
+    });
+  }
+
+  // Validate params if present
+  if (params !== undefined && params !== null && typeof params !== 'object') {
+    return res.status(400).json({
+      jsonrpc: '2.0',
+      error: {
+        code: -32600,
+        message: 'Invalid Request: Params must be an object or null'
+      },
+      id: id
+    });
+  }
+
+  // Validate id (must be string, number, or null)
+  if (id !== null && typeof id !== 'string' && typeof id !== 'number') {
+    return res.status(400).json({
+      jsonrpc: '2.0',
+      error: {
+        code: -32600,
+        message: 'Invalid Request: ID must be a string, number, or null'
+      },
+      id: null
+    });
+  }
+
+  next();
+};
+
 // Message endpoint - proxy to stdio MCP server
-app.post('/messages', async (req, res) => {
+app.post('/messages', validateJsonRpcRequest, async (req, res) => {
   try {
     const { jsonrpc, method, params, id } = req.body;
-
-    if (jsonrpc !== '2.0') {
-      throw new Error('Invalid JSON-RPC version');
-    }
 
     // Spawn the stdio server for each request
     const child = spawn('node', ['dist/index.js'], {

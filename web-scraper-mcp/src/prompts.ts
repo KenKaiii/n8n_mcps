@@ -12,12 +12,12 @@ export function setupPrompts(server: Server): void {
   // Handle list prompts request
   server.setRequestHandler(ListPromptsRequestSchema, async () => {
     return {
-      prompts: []
+      prompts: [],
     };
   });
 
   // Handle get prompt request
-  server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+  server.setRequestHandler(GetPromptRequestSchema, async request => {
     throw new Error(`Prompt not found: ${request.params.name}`);
   });
 }

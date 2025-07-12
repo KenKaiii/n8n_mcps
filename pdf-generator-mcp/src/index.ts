@@ -55,18 +55,23 @@ setupTools(server);
 
 // Start the server
 async function main() {
-  console.error('Starting PDF Generator MCP server...');
+  try {
+    console.error('Starting PDF Generator MCP server...');
 
-  // Ensure stdout is unbuffered for SSE
-  if (process.stdout.isTTY === false) {
-    process.stdout.setDefaultEncoding('utf-8');
+    // Ensure stdout is unbuffered for SSE
+    if (process.stdout.isTTY === false) {
+      process.stdout.setDefaultEncoding('utf-8');
+    }
+
+    const transport = new StdioServerTransport();
+
+    console.error('Connecting transport...');
+    await server.connect(transport);
+    console.error('PDF Generator MCP server started and ready');
+  } catch (error) {
+    console.error('Failed to start PDF Generator MCP server:', error);
+    throw new Error(`Failed to start server: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-
-  const transport = new StdioServerTransport();
-
-  console.error('Connecting transport...');
-  await server.connect(transport);
-  console.error('PDF Generator MCP server started and ready');
 }
 
 main().catch(error => {

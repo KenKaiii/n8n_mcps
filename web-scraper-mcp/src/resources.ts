@@ -12,12 +12,12 @@ export function setupResources(server: Server): void {
   // Handle list resources request
   server.setRequestHandler(ListResourcesRequestSchema, async () => {
     return {
-      resources: []
+      resources: [],
     };
   });
 
   // Handle read resource request
-  server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+  server.setRequestHandler(ReadResourceRequestSchema, async request => {
     throw new Error(`Resource not found: ${request.params.uri}`);
   });
 }

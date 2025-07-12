@@ -60,27 +60,37 @@ let browser: Browser | null = null;
  * Get or create browser instance
  */
 async function getBrowser(): Promise<Browser> {
-  if (!browser) {
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
+  try {
+    if (!browser) {
+      browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
+    }
+    return browser;
+  } catch (error) {
+    console.error('Failed to launch browser:', error);
+    throw new Error(`Failed to launch browser: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-  return browser;
 }
 
 /**
  * Generate QR code as data URL
  */
 async function generateQRCode(data: string, size: number = 200): Promise<string> {
-  return await QRCode.toDataURL(data, {
-    width: size,
-    margin: 1,
-    color: {
-      dark: '#000000',
-      light: '#FFFFFF'
-    }
-  });
+  try {
+    return await QRCode.toDataURL(data, {
+      width: size,
+      margin: 1,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF'
+      }
+    });
+  } catch (error) {
+    console.error('Failed to generate QR code:', error);
+    throw new Error(`Failed to generate QR code: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 /**
@@ -995,7 +1005,8 @@ export async function generatePDF(
 export async function generateTechnicalPDF(
   options: TechnicalPDFOptions
 ): Promise<PDFGenerationResult> {
-  const css = getBaseCSS(options.theme, options.fontStyle);
+  try {
+    const css = getBaseCSS(options.theme, options.fontStyle);
 
   // Build HTML content
   let html = `
@@ -1081,6 +1092,13 @@ export async function generateTechnicalPDF(
   html += '</body></html>';
 
   return generatePDF(html, options);
+  } catch (error) {
+    console.error('Failed to generate technical PDF:', error);
+    return {
+      success: false,
+      error: `Failed to generate technical PDF: ${error instanceof Error ? error.message : 'Unknown error'}`
+    };
+  }
 }
 
 /**
@@ -1089,7 +1107,8 @@ export async function generateTechnicalPDF(
 export async function generateResearchPDF(
   options: ResearchPDFOptions
 ): Promise<PDFGenerationResult> {
-  const css = getBaseCSS(options.theme, options.fontStyle);
+  try {
+    const css = getBaseCSS(options.theme, options.fontStyle);
 
   let html = `
     <!DOCTYPE html>
@@ -1217,6 +1236,13 @@ export async function generateResearchPDF(
   html += '</body></html>';
 
   return generatePDF(html, options);
+  } catch (error) {
+    console.error('Failed to generate research PDF:', error);
+    return {
+      success: false,
+      error: `Failed to generate research PDF: ${error instanceof Error ? error.message : 'Unknown error'}`
+    };
+  }
 }
 
 /**
@@ -1273,10 +1299,11 @@ export async function generateEverydayPDF(
 export async function generateMarkdownPDF(
   options: MarkdownToPDFOptions
 ): Promise<PDFGenerationResult> {
-  const css = getBaseCSS(options.theme, options.fontStyle);
-  const htmlContent = await markdownToHtml(options.markdown, {
-    highlight: options.includeHighlighting
-  });
+  try {
+    const css = getBaseCSS(options.theme, options.fontStyle);
+    const htmlContent = await markdownToHtml(options.markdown, {
+      highlight: options.includeHighlighting
+    });
 
   const html = `
     <!DOCTYPE html>
@@ -1296,6 +1323,13 @@ export async function generateMarkdownPDF(
   `;
 
   return generatePDF(html, options);
+  } catch (error) {
+    console.error('Failed to generate markdown PDF:', error);
+    return {
+      success: false,
+      error: `Failed to generate markdown PDF: ${error instanceof Error ? error.message : 'Unknown error'}`
+    };
+  }
 }
 
 /**
@@ -1440,8 +1474,13 @@ function getDefaultTemplate(documentType: string): string {
  * Cleanup browser on exit
  */
 export async function cleanup() {
-  if (browser) {
-    await browser.close();
-    browser = null;
+  try {
+    if (browser) {
+      await browser.close();
+      browser = null;
+    }
+  } catch (error) {
+    console.error('Failed to cleanup browser:', error);
+    // Don't throw here as cleanup should be best-effort
   }
 }

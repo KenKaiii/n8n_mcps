@@ -743,5 +743,9 @@ FULL MARKDOWN FORMATTING SUPPORT:
 
 // Cleanup on exit
 process.on('exit', async () => {
-  await cleanup();
+  try {
+    await cleanup();
+  } catch (error) {
+    console.error('Error during cleanup:', error);
+  }
 });

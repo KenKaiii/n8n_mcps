@@ -27,8 +27,25 @@ const authMiddleware = (req: express.Request, res: express.Response, next: expre
 // SSE connections
 const sseConnections = new Map<string, express.Response>();
 
-// SSE endpoint with authentication
-app.get('/sse', authMiddleware, (req, res) => {
+// SSE endpoint with flexible authentication (header or query param)
+app.get('/sse', (req, res) => {
+  // Check for token in Authorization header or query parameter
+  const authHeader = req.headers.authorization;
+  const tokenFromHeader = authHeader?.replace('Bearer ', '');
+  const tokenFromQuery = req.query.token as string;
+
+  const token = tokenFromHeader || tokenFromQuery;
+
+  if (!token || token !== process.env.MCP_AUTH_TOKEN) {
+    return res.status(401).json({
+      jsonrpc: '2.0',
+      error: {
+        code: -32001,
+        message: 'Unauthorized: Invalid or missing MCP auth token'
+      },
+      id: null
+    });
+  }
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',

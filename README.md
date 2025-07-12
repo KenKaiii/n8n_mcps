@@ -15,7 +15,7 @@ By Ken Kai does AI
 
 **🤖 Power up your n8n workflows with 3 amazing AI-powered MCP servers!**
 
-*Created by [Ken](https://github.com/kenkai) to make no-code automation even more powerful* 🚀
+*Created by [Ken](https://skool.com/kenkai) to make no-code automation even more powerful* 🚀
 
 ---
 

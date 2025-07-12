@@ -49,7 +49,7 @@ Create beautiful PDFs from any content
 
 ### **Get the Code**
 ```bash
-git clone https://github.com/kenkai/n8n_mcps.git
+git clone https://github.com/kenkaiii/n8n_mcps.git
 cd n8n_mcps
 code .
 ```

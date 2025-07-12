@@ -56,6 +56,9 @@ COPY --from=builder /app/dist ./dist
 # Create .env file from environment
 RUN touch .env
 
+# Install supergateway globally
+RUN npm install -g supergateway
+
 EXPOSE 8080
 
 # Set environment variables
@@ -65,5 +68,5 @@ ENV GITHUB_OWNER=${GITHUB_OWNER}
 ENV GITHUB_REPO=${GITHUB_REPO}
 ENV MCP_AUTH_TOKEN=${MCP_AUTH_TOKEN}
 
-# Start the authenticated SSE server
-CMD ["node", "dist/sse-server.js"]
+# Start with supergateway - use Bearer token auth properly
+CMD ["sh", "-c", "supergateway --port ${PORT:-8080} --oauth2Bearer \"${MCP_AUTH_TOKEN}\" --stdio 'node dist/index.js 2>&1'"]

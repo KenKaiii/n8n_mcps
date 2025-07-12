@@ -54,6 +54,9 @@ COPY --from=builder /app/dist ./dist
 # Create .env file from environment variables
 RUN touch .env
 
+# Install supergateway globally
+RUN npm install -g supergateway
+
 # Set Puppeteer to use installed Chromium
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
@@ -67,5 +70,5 @@ ENV GITHUB_TOKEN=${GITHUB_TOKEN}
 # Set MCP_AUTH_TOKEN from environment
 ENV MCP_AUTH_TOKEN=${MCP_AUTH_TOKEN}
 
-# Start the authenticated SSE server
-CMD ["node", "dist/sse-server.js"]
+# Start with supergateway - use Bearer token auth properly
+CMD ["sh", "-c", "supergateway --port ${PORT:-8080} --oauth2Bearer \"${MCP_AUTH_TOKEN}\" --stdio 'node dist/index.js 2>&1'"]

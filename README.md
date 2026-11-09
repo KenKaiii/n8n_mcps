@@ -15,7 +15,10 @@ By Ken Kai does AI
 
 **🤖 Power up your n8n workflows with 3 amazing AI-powered MCP servers!**
 
-*Created by [Ken](https://skool.com/kenkai/about) to make no-code automation even more powerful* 🚀
+*Created by [Ken](https://www.skool.com/raid) to make no-code automation even more powerful* 🚀
+
+> [!TIP]
+> **Want to build your own apps with AI?** A free 7-day build challenge and 20+ step-by-step projects are in my free community: **[skool.com/raid](https://www.skool.com/raid)**
 
 ---
 
